@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Météo</string>
+    <string name="location_paris">Paris (par défaut)</string>
+    <string name="my_location">Ma position</string>
+    <string name="retry">Réessayer</string>
+    <string name="error_network">Impossible de charger la météo. Vérifiez la connexion.</string>
+    <string name="location_denied">Permission refusée : affichage de Paris par défaut.</string>
+    <string name="summary_title">Aujourd’hui et demain</string>
+    <string name="hourly_title">12 prochaines heures</string>
+    <string name="daily_title">5 prochains jours</string>
+    <string name="today">Aujourd’hui</string>
+    <string name="tomorrow">Demain</string>
+    <string name="morning">Matin</string>
+    <string name="noon">Midi</string>
+    <string name="afternoon">Après-midi</string>
+    <string name="evening">Soirée</string>
+</resources>
