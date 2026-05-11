@@ -135,7 +135,7 @@ object WeatherMapper {
             emptyList()
         }
 
-        val daily5 = dailyDates.asSequence().take(5).mapIndexed { index, dateStr ->
+        val daily5 = dailyDates.asSequence().take(15).mapIndexed { index, dateStr ->
             val d = runCatching { LocalDate.parse(dateStr) }.getOrNull() ?: LocalDate.now()
             val minC = dailyMin.getOrNull(index)?.roundToInt() ?: 0
             val maxC = dailyMax.getOrNull(index)?.roundToInt() ?: 0
