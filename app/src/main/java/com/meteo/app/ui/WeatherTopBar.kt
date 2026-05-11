@@ -1,6 +1,5 @@
 package com.meteo.app.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
@@ -32,7 +31,7 @@ internal fun WeatherTopBar(
     onSettingsClick: () -> Unit,
     onCurrentLocationRequest: () -> Unit,
 ) {
-    var isSearching by remember { mutableStateOf(false) }
+    var isSearching by remember { mutableStateOf(value = false) }
     var query by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -50,12 +49,12 @@ internal fun WeatherTopBar(
             if (!isSearching) {
                 Row(
                     modifier = Modifier
-                        .clickable {
+                        .clickable(onClick = {
                             isSearching = true
                             query = ""
-                        }
+                        })
                         .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         locationTitle,
@@ -89,9 +88,11 @@ internal fun WeatherTopBar(
                             unfocusedIndicatorColor = Color.Transparent,
                         ),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = {
-                            focusManager.clearFocus()
-                        }),
+                        keyboardActions = KeyboardActions(
+                            onSearch = {
+                                focusManager.clearFocus()
+                            }
+                        ),
                         trailingIcon = {
                             IconButton(onClick = {
                                 isSearching = false

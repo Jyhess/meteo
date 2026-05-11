@@ -1,6 +1,7 @@
 package com.meteo.app.data.local
 
 import android.content.Context
+import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.meteo.app.domain.SavedLocation
@@ -23,12 +24,12 @@ class LocationStore(context: Context) {
 
     fun saveLocations(locations: List<SavedLocation>) {
         val json = gson.toJson(locations)
-        prefs.edit().putString("locations", json).apply()
+        prefs.edit { putString("locations", json) }
     }
 
     private fun saveHistory(history: List<SavedLocation>) {
         val json = gson.toJson(history)
-        prefs.edit().putString("history", json).apply()
+        prefs.edit { putString("history", json) }
     }
 
     fun addToHistory(location: SavedLocation) {

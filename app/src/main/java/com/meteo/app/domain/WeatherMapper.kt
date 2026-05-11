@@ -4,7 +4,6 @@ import com.meteo.app.data.api.ForecastResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.util.Locale
 
 object WeatherMapper {
@@ -32,8 +31,6 @@ object WeatherMapper {
     }
 
     private val hourMinuteFormatter = DateTimeFormatter.ofPattern("HH:mm")
-    private val mediumDateFormatter =
-        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(localeFr)
 
     private fun parseLocalDateTime(iso: String): LocalDateTime {
         val base = iso.takeWhile { (it != '[') && (it != '+') && (it != 'Z') }

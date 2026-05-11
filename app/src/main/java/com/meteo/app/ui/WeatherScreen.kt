@@ -52,7 +52,6 @@ fun WeatherRoute(
         LocationSelectionDialog(
             viewModel = viewModel,
             onDismiss = {
-                showLocationDialog = false
                 viewModel.clearSearch()
             },
             onCurrentLocationRequest = onRequestLocation

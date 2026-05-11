@@ -22,7 +22,6 @@ import com.meteo.app.domain.DayForecastUi
 internal fun DailyStrip(days: List<DayForecastUi>) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(days, key = { "${it.weekdayLabel} ${it.dayOfMonth}" }) { d ->
-            val selected = d == days.firstOrNull()
             Card(
                 modifier = Modifier.width(96.dp),
                 colors = CardDefaults.cardColors(
