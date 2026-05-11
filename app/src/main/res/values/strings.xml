@@ -3,6 +3,7 @@
     <string name="location_paris">Paris (par défaut)</string>
     <string name="my_location">Ma position</string>
     <string name="retry">Réessayer</string>
+    <string name="loading">Chargement…</string>
     <string name="error_network">Impossible de charger la météo. Vérifiez la connexion.</string>
     <string name="location_denied">Permission refusée : affichage de Paris par défaut.</string>
     <string name="summary_title">Aujourd’hui et demain</string>
@@ -14,4 +15,20 @@
     <string name="noon">Midi</string>
     <string name="afternoon">Après-midi</string>
     <string name="evening">Soirée</string>
+    <string name="night">Nuit</string>
+    <string name="late_morning">Matinée</string>
+    <string name="forecast_title">Prévisions</string>
+    <string name="section_next_hours">Prochaines heures</string>
+    <string name="section_5_days">5 jours</string>
+    <string name="unknown_weather">Variable</string>
+    <string name="clear_weather">Dégagé</string>
+    <string name="no_hourly_data">Aucune donnée horaire.</string>
+    <string name="no_tomorrow_details">Pas assez de données pour détailler demain.</string>
+    <string name="cd_change_location">Changer de localisation</string>
+    <string name="cd_refresh">Actualiser</string>
+    <string name="cd_my_location">Ma position</string>
+    <string name="cd_more_actions">Plus d\'actions</string>
+    <string name="today_summary">%1$s · %2$d° / %3$d° · %4$s %5$s</string>
+    <string name="precipitation_pct">💧 %1$d %%</string>
+    <string name="daily_date_short">%1$s</string>
 </resources>

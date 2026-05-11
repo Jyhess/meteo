@@ -1,0 +1,76 @@
+package com.meteo.app.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.meteo.app.R
+import com.meteo.app.domain.HourRowUi
+
+@Composable
+internal fun HourlyRow(hours: List<HourRowUi>) {
+    if (hours.isEmpty()) {
+        Text(stringResource(R.string.no_hourly_data), style = MaterialTheme.typography.bodyMedium)
+        return
+    }
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items(hours, key = { it.timeLabel }) { h ->
+            Card(
+                modifier = Modifier.width(96.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                ),
+            ) {
+                Column(
+                    Modifier
+                        .defaultMinSize(minHeight = 132.dp)
+                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        h.timeLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        "${h.tempC}°",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        h.precipPct?.let { stringResource(R.string.precipitation_pct, it) } ?: "💧 —",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Text(
+                        weatherEmoji(h.label),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        h.label,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+    }
+}
