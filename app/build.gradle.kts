@@ -18,6 +18,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -59,4 +60,12 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+// Workaround for https://youtrack.jetbrains.com/issue/KT-83266
+// Disable Compose mapping tasks that fail in AGP 9.0 + Kotlin 2.3.21
+tasks.configureEach {
+    if (name.contains("ComposeMapping", ignoreCase = true)) {
+        enabled = false
+    }
 }

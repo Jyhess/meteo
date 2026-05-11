@@ -36,6 +36,8 @@ class WeatherRepository {
         return WeatherMapper.buildUi(response, locationLabel)
     }
 
+    suspend fun searchCity(query: String) = api.search(query).results.orEmpty()
+
     companion object {
         private const val BASE_URL = "https://api.open-meteo.com/"
     }

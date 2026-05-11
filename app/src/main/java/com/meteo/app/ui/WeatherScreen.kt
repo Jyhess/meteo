@@ -17,6 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -31,14 +34,39 @@ fun WeatherRoute(
     onRefresh: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
-    val locationTitle = (state as? WeatherUiState.Success)?.data?.locationLabel
+    var showLocationDialog by remember { mutableStateOf(false) }
+    var currentScreen by remember { mutableStateOf("weather") }
+
+    if (currentScreen == "preferences") {
+        PreferencesScreen(
+            viewModel = viewModel,
+            onBack = { currentScreen = "weather" }
+        )
+        return
+    }
+
+    val locationTitle = (state as? WeatherUiState.Success)?.currentLocation?.name
         ?: stringResource(R.string.app_name)
+
+    if (showLocationDialog) {
+        LocationSelectionDialog(
+            viewModel = viewModel,
+            onDismiss = {
+                showLocationDialog = false
+                viewModel.clearSearch()
+            },
+            onCurrentLocationRequest = onRequestLocation
+        )
+    }
+
     Scaffold(
         topBar = {
             WeatherTopBar(
                 locationTitle = locationTitle,
-                onRequestLocation = onRequestLocation,
+                viewModel = viewModel,
                 onRefresh = onRefresh,
+                onSettingsClick = { currentScreen = "preferences" },
+                onCurrentLocationRequest = onRequestLocation
             )
         },
     ) { padding ->

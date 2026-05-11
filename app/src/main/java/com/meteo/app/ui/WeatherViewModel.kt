@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.meteo.app.data.WeatherRepository
+import com.meteo.app.data.api.GeocodingResult
+import com.meteo.app.data.local.LocationStore
+import com.meteo.app.domain.SavedLocation
 import com.meteo.app.domain.WeatherScreenUi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,24 +15,45 @@ import kotlinx.coroutines.launch
 
 sealed class WeatherUiState {
     data object Loading : WeatherUiState()
-    data class Success(val data: WeatherScreenUi) : WeatherUiState()
+    data class Success(val data: WeatherScreenUi, val currentLocation: SavedLocation) : WeatherUiState()
     data class Error(val message: String) : WeatherUiState()
 }
 
 class WeatherViewModel(
     private val repository: WeatherRepository,
+    private val locationStore: LocationStore,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
     val state: StateFlow<WeatherUiState> = _state.asStateFlow()
 
-    fun load(latitude: Double, longitude: Double, locationLabel: String) {
+    private val _savedLocations = MutableStateFlow<List<SavedLocation>>(emptyList())
+    val savedLocations: StateFlow<List<SavedLocation>> = _savedLocations.asStateFlow()
+
+    private val _history = MutableStateFlow<List<SavedLocation>>(emptyList())
+    val history: StateFlow<List<SavedLocation>> = _history.asStateFlow()
+
+    private val _searchResults = MutableStateFlow<List<GeocodingResult>>(emptyList())
+    val searchResults: StateFlow<List<GeocodingResult>> = _searchResults.asStateFlow()
+
+    init {
+        _savedLocations.value = locationStore.getLocations()
+        _history.value = locationStore.getHistory()
+    }
+
+    fun load(location: SavedLocation, addToHistory: Boolean = false) {
         viewModelScope.launch {
             _state.value = WeatherUiState.Loading
             runCatching {
-                repository.fetchWeather(latitude, longitude, locationLabel)
+                repository.fetchWeather(location.latitude, location.longitude, location.name)
             }.fold(
-                onSuccess = { _state.value = WeatherUiState.Success(it) },
+                onSuccess = { 
+                    _state.value = WeatherUiState.Success(it, location)
+                    if (addToHistory) {
+                        locationStore.addToHistory(location)
+                        _history.value = locationStore.getHistory()
+                    }
+                },
             ) { e ->
                 _state.value = WeatherUiState.Error(
                     e.message ?: "Erreur inconnue",
@@ -37,15 +61,36 @@ class WeatherViewModel(
             }
         }
     }
+
+    fun toggleFavorite(location: SavedLocation) {
+        locationStore.toggleFavorite(location)
+        _savedLocations.value = locationStore.getLocations()
+    }
+
+    fun search(query: String) {
+        if (query.length < 2) {
+            _searchResults.value = emptyList()
+            return
+        }
+        viewModelScope.launch {
+            runCatching { repository.searchCity(query) }
+                .onSuccess { _searchResults.value = it }
+        }
+    }
+
+    fun clearSearch() {
+        _searchResults.value = emptyList()
+    }
 }
 
 class WeatherViewModelFactory(
     private val repository: WeatherRepository,
+    private val locationStore: LocationStore,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(WeatherViewModel::class.java)) {
-            return WeatherViewModel(repository) as T
+            return WeatherViewModel(repository, locationStore) as T
         }
         throw IllegalArgumentException("Type de ViewModel inconnu")
     }

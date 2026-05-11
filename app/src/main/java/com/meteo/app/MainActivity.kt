@@ -20,6 +20,8 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.meteo.app.data.WeatherRepository
+import com.meteo.app.data.local.LocationStore
+import com.meteo.app.domain.SavedLocation
 import com.meteo.app.ui.WeatherRoute
 import com.meteo.app.ui.WeatherViewModel
 import com.meteo.app.ui.WeatherViewModelFactory
@@ -28,6 +30,7 @@ import com.meteo.app.ui.theme.MeteoTheme
 class MainActivity : ComponentActivity() {
 
     private val fused by lazy { LocationServices.getFusedLocationProviderClient(this) }
+    private val locationStore by lazy { LocationStore(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,17 +38,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             MeteoTheme {
                 val vm: WeatherViewModel = viewModel(
-                    factory = WeatherViewModelFactory(WeatherRepository()),
+                    factory = WeatherViewModelFactory(WeatherRepository(), locationStore),
                 )
-                var coords by remember {
-                    mutableStateOf(
-                        Triple(
-                            DEFAULT_LAT,
-                            DEFAULT_LON,
-                            getString(R.string.location_paris),
-                        ),
-                    )
-                }
 
                 val permissionLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestMultiplePermissions(),
@@ -54,13 +48,27 @@ class MainActivity : ComponentActivity() {
                         (results[Manifest.permission.ACCESS_COARSE_LOCATION] == true)
                     if (granted) {
                         requestDeviceLocation { lat, lon ->
-                            coords = Triple(lat, lon, getString(R.string.my_location))
+                            vm.load(SavedLocation(getString(R.string.my_location), lat, lon))
                         }
+                    } else {
+                        // Fallback to default if permission denied
+                        vm.load(SavedLocation("Paris", 48.856614, 2.3522219))
                     }
                 }
 
-                LaunchedEffect(coords) {
-                    vm.load(coords.first, coords.second, coords.third)
+                LaunchedEffect(Unit) {
+                    if (hasLocationPermission()) {
+                        requestDeviceLocation { lat, lon ->
+                            vm.load(SavedLocation(getString(R.string.my_location), lat, lon))
+                        }
+                    } else {
+                        permissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                            ),
+                        )
+                    }
                 }
 
                 WeatherRoute(
@@ -68,7 +76,7 @@ class MainActivity : ComponentActivity() {
                     onRequestLocation = {
                         if (hasLocationPermission()) {
                             requestDeviceLocation { lat, lon ->
-                                coords = Triple(lat, lon, getString(R.string.my_location))
+                                vm.load(SavedLocation(getString(R.string.my_location), lat, lon))
                             }
                         } else {
                             permissionLauncher.launch(
@@ -79,9 +87,13 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     },
-                ) {
-                    vm.load(coords.first, coords.second, coords.third)
-                }
+                    onRefresh = {
+                        val state = vm.state.value
+                        if (state is com.meteo.app.ui.WeatherUiState.Success) {
+                            vm.load(state.currentLocation)
+                        }
+                    }
+                )
             }
         }
     }
@@ -116,7 +128,5 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val DEFAULT_LAT = 48.856614
-        private const val DEFAULT_LON = 2.3522219
     }
 }
