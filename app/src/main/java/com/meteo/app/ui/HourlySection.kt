@@ -52,8 +52,12 @@ internal fun HourlyRow(hours: List<HourRowUi>) {
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
+                        weatherEmoji(h.label),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                    Text(
                         "${h.tempC}°",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
@@ -61,13 +65,8 @@ internal fun HourlyRow(hours: List<HourRowUi>) {
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Text(
-                        weatherEmoji(h.label),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Text(
-                        h.label,
+                        "💨 ${h.windSpeed} km/h",
                         style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
                     )
                 }
             }

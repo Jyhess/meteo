@@ -64,11 +64,13 @@ object WeatherMapper {
         val hourlyTemps = hourly?.temperature.orEmpty()
         val hourlyCodes = hourly?.weatherCode.orEmpty()
         val hourlyPrecip = hourly?.precipitationProbability.orEmpty()
+        val hourlyWind = hourly?.windSpeed.orEmpty()
 
         val dailyDates = daily?.time.orEmpty()
         val dailyMax = daily?.maxC.orEmpty()
         val dailyMin = daily?.minC.orEmpty()
         val dailyCodes = daily?.weatherCode.orEmpty()
+        val dailyWind = daily?.windSpeedMax.orEmpty()
 
         val now = LocalDateTime.now()
         val slotStart = now.withMinute(0).withSecond(0).withNano(0)
@@ -85,6 +87,7 @@ object WeatherMapper {
                 timeLabel = timeLabel,
                 tempC = hourlyTemps.getOrNull(i)?.roundToInt() ?: 0,
                 precipPct = hourlyPrecip.getOrNull(i),
+                windSpeed = hourlyWind.getOrNull(i)?.roundToInt() ?: 0,
                 label = describeCode(hourlyCodes.getOrNull(i)),
             )
         }
@@ -136,11 +139,13 @@ object WeatherMapper {
             val d = runCatching { LocalDate.parse(dateStr) }.getOrNull() ?: LocalDate.now()
             val minC = dailyMin.getOrNull(index)?.roundToInt() ?: 0
             val maxC = dailyMax.getOrNull(index)?.roundToInt() ?: 0
+            val windSpeed = dailyWind.getOrNull(index)?.roundToInt() ?: 0
             DayForecastUi(
                 weekdayLabel = weekdayShort(d),
-                dateLabel = d.format(mediumDateFormatter),
+                dayOfMonth = d.dayOfMonth,
                 minC = minC,
                 maxC = maxC,
+                windSpeed = windSpeed,
                 label = describeCode(dailyCodes.getOrNull(index)),
             )
         }.toList()
@@ -213,13 +218,15 @@ data class HourRowUi(
     val timeLabel: String,
     val tempC: Int,
     val precipPct: Int?,
+    val windSpeed: Int,
     val label: String,
 )
 
 data class DayForecastUi(
     val weekdayLabel: String,
-    val dateLabel: String,
+    val dayOfMonth: Int,
     val minC: Int,
     val maxC: Int,
+    val windSpeed: Int,
     val label: String,
 )

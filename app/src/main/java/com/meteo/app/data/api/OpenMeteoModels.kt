@@ -19,6 +19,7 @@ data class HourlyDto(
     @SerializedName("temperature_2m") val temperature: List<Double>?,
     @SerializedName("weather_code") val weatherCode: List<Int>?,
     @SerializedName("precipitation_probability") val precipitationProbability: List<Int>?,
+    @SerializedName("wind_speed_10m") val windSpeed: List<Double>?,
 )
 
 data class DailyDto(
@@ -26,4 +27,5 @@ data class DailyDto(
     @SerializedName("weather_code") val weatherCode: List<Int>?,
     @SerializedName("temperature_2m_max") val maxC: List<Double>?,
     @SerializedName("temperature_2m_min") val minC: List<Double>?,
+    @SerializedName("wind_speed_10m_max") val windSpeedMax: List<Double>?,
 )
