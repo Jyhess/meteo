@@ -30,12 +30,11 @@ class WeatherViewModel(
                 repository.fetchWeather(latitude, longitude, locationLabel)
             }.fold(
                 onSuccess = { _state.value = WeatherUiState.Success(it) },
-                onFailure = { e ->
-                    _state.value = WeatherUiState.Error(
-                        e.message ?: "Erreur inconnue",
-                    )
-                },
-            )
+            ) { e ->
+                _state.value = WeatherUiState.Error(
+                    e.message ?: "Erreur inconnue",
+                )
+            }
         }
     }
 }

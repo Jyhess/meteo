@@ -43,7 +43,7 @@ internal fun OverviewSection(overview: WeatherOverviewUi) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    slots.drop(2).take(2).forEach { slot ->
+                    slots.asSequence().drop(2).take(2).forEach { slot ->
                         DaySlotCard(
                             slot = slot,
                             modifier = Modifier.weight(1f),

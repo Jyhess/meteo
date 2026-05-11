@@ -36,12 +36,12 @@ object WeatherMapper {
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(localeFr)
 
     private fun parseLocalDateTime(iso: String): LocalDateTime {
-        val base = iso.takeWhile { it != '[' && it != '+' && it != 'Z' }
+        val base = iso.takeWhile { (it != '[') && (it != '+') && (it != 'Z') }
         return try {
             LocalDateTime.parse(base)
         } catch (_: Exception) {
             if (base.count { it == ':' } == 1) {
-                LocalDateTime.parse(base + ":00")
+                LocalDateTime.parse("$base:00")
             } else {
                 LocalDateTime.parse(base.take(19))
             }
@@ -132,7 +132,7 @@ object WeatherMapper {
             emptyList()
         }
 
-        val daily5 = dailyDates.take(5).mapIndexed { index, dateStr ->
+        val daily5 = dailyDates.asSequence().take(5).mapIndexed { index, dateStr ->
             val d = runCatching { LocalDate.parse(dateStr) }.getOrNull() ?: LocalDate.now()
             val minC = dailyMin.getOrNull(index)?.roundToInt() ?: 0
             val maxC = dailyMax.getOrNull(index)?.roundToInt() ?: 0
@@ -143,7 +143,7 @@ object WeatherMapper {
                 maxC = maxC,
                 label = describeCode(dailyCodes.getOrNull(index)),
             )
-        }
+        }.toList()
 
         return WeatherScreenUi(
             locationLabel = locationLabel,

@@ -50,8 +50,8 @@ class MainActivity : ComponentActivity() {
                 val permissionLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestMultiplePermissions(),
                 ) { results ->
-                    val granted = results[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                        results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+                    val granted = (results[Manifest.permission.ACCESS_FINE_LOCATION] == true) ||
+                        (results[Manifest.permission.ACCESS_COARSE_LOCATION] == true)
                     if (granted) {
                         requestDeviceLocation { lat, lon ->
                             coords = Triple(lat, lon, getString(R.string.my_location))
@@ -79,23 +79,22 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     },
-                    onRefresh = {
-                        vm.load(coords.first, coords.second, coords.third)
-                    },
-                )
+                ) {
+                    vm.load(coords.first, coords.second, coords.third)
+                }
             }
         }
     }
 
     private fun hasLocationPermission(): Boolean =
-        ContextCompat.checkSelfPermission(
+        (ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_FINE_LOCATION,
-        ) == PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(
+        ) == PackageManager.PERMISSION_GRANTED) ||
+            (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
-            ) == PackageManager.PERMISSION_GRANTED
+            ) == PackageManager.PERMISSION_GRANTED)
 
     @SuppressLint("MissingPermission")
     private fun requestDeviceLocation(onResult: (Double, Double) -> Unit) {
