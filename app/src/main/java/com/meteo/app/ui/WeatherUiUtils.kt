@@ -1,14 +1,20 @@
 package com.meteo.app.ui
 
-internal fun weatherEmoji(label: String): String {
-    val normalized = label.lowercase()
-    return when {
-        "orage" in normalized -> "⛈️"
-        "neige" in normalized -> "❄️"
-        ("pluie" in normalized) || ("averse" in normalized) || ("bruine" in normalized) -> "🌧️"
-        "brouillard" in normalized -> "🌫️"
-        "dégagé" in normalized || "ensoleillé" in normalized -> "☀️"
-        "nuage" in normalized -> "⛅"
-        else -> "🌤️"
-    }
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.meteo.app.domain.WeatherCondition
+
+@Composable
+internal fun WeatherIcon(label: String, modifier: Modifier = Modifier) {
+    val condition = WeatherCondition.entries.find { it.description == label } ?: WeatherCondition.UNKNOWN
+    Image(
+        painter = painterResource(id = condition.iconRes),
+        contentDescription = label,
+        modifier = modifier.size(48.dp)
+    )
 }
+

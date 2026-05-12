@@ -39,7 +39,7 @@ internal fun DailyPanel(days: List<DayForecast>) {
                         "${d.weekdayLabel.lowercase()} ${d.dayOfMonth}",
                         style = MaterialTheme.typography.labelLarge,
                     )
-                    Text(weatherEmoji(d.label), style = MaterialTheme.typography.titleLarge)
+                    WeatherIcon(d.label)
                     Text(
                         "${d.maxC}°",
                         style = MaterialTheme.typography.titleLarge,

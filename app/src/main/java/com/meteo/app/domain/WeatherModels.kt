@@ -1,5 +1,7 @@
 package com.meteo.app.domain
 
+import com.meteo.app.R
+
 data class WeatherData(
     val locationLabel: String,
     val overview: WeatherOverview,
@@ -13,38 +15,66 @@ data class WeatherOverview(
     val periodSlots: List<PeriodSlot> = emptyList(),
 )
 
-enum class WeatherCondition(val description: String) {
-    CLEAR("Dégagé"),
-    PARTLY_CLOUDY("Partiellement nuageux"),
-    FOG("Brouillard"),
-    DRIZZLE("Bruine"),
-    FREEZING_DRIZZLE("Bruine verglaçante"),
-    RAIN("Pluie"),
-    FREEZING_RAIN("Pluie verglaçante"),
-    SNOW("Neige"),
-    SNOW_GRAINS("Grains de neige"),
-    SHOWERS("Averses"),
-    SNOW_SHOWERS("Averses de neige"),
-    THUNDERSTORM("Orages"),
-    THUNDERSTORM_HAIL("Orages avec grêle"),
-    VARIABLE("Variable"),
-    UNKNOWN("—");
+enum class WeatherCondition(val description: String, val iconRes: Int) {
+    CLEAR("Dégagé", R.drawable.airy_clear),
+    MOSTLY_CLEAR("Essentiellement dégagé", R.drawable.airy_mostly_clear),
+    PARTLY_CLOUDY("Partiellement nuageux", R.drawable.airy_partly_cloudy),
+    OVERCAST("Couvert", R.drawable.airy_overcast),
+    FOG("Brouillard", R.drawable.airy_fog),
+    RIME_FOG("Brouillard givrant", R.drawable.airy_rime_fog),
+    LIGHT_DRIZZLE("Bruine légère", R.drawable.airy_light_drizzle),
+    MODERATE_DRIZZLE("Bruine modérée", R.drawable.airy_moderate_drizzle),
+    DENSE_DRIZZLE("Bruine dense", R.drawable.airy_dense_drizzle),
+    LIGHT_FREEZING_DRIZZLE("Bruine verglaçante légère", R.drawable.airy_light_freezing_drizzle),
+    DENSE_FREEZING_DRIZZLE("Bruine verglaçante dense", R.drawable.airy_dense_freezing_drizzle),
+    LIGHT_RAIN("Pluie légère", R.drawable.airy_light_rain),
+    MODERATE_RAIN("Pluie modérée", R.drawable.airy_moderate_rain),
+    HEAVY_RAIN("Pluie forte", R.drawable.airy_heavy_rain),
+    LIGHT_FREEZING_RAIN("Pluie verglaçante légère", R.drawable.airy_light_freezing_rain),
+    HEAVY_FREEZING_RAIN("Pluie verglaçante forte", R.drawable.airy_heavy_freezing_rain),
+    SLIGHT_SNOWFALL("Chutes de neige légères", R.drawable.airy_slight_snowfall),
+    MODERATE_SNOWFALL("Chutes de neige modérées", R.drawable.airy_moderate_snowfall),
+    HEAVY_SNOWFALL("Chutes de neige fortes", R.drawable.airy_heavy_snowfall),
+    SNOW_GRAINS("Grains de neige", R.drawable.airy_snowflake),
+    RAIN_SHOWERS_SLIGHT("Averses de pluie légères", R.drawable.airy_light_rain),
+    RAIN_SHOWERS_MODERATE("Averses de pluie modérées", R.drawable.airy_moderate_rain),
+    RAIN_SHOWERS_VIOLENT("Averses de pluie violentes", R.drawable.airy_heavy_rain),
+    SNOW_SHOWERS_SLIGHT("Averses de neige légères", R.drawable.airy_snowflake),
+    SNOW_SHOWERS_HEAVY("Averses de neige fortes", R.drawable.airy_snowflake),
+    THUNDERSTORM("Orage", R.drawable.airy_thunderstorm),
+    THUNDERSTORM_HAIL("Orage avec grêle", R.drawable.airy_thunderstorm_with_hail),
+    VARIABLE("Variable", R.drawable.airy_partly_cloudy),
+    UNKNOWN("—", R.drawable.airy_clear);
 
     companion object {
         fun fromWMOCode(code: Int?): WeatherCondition {
             return when (code) {
                 null -> UNKNOWN
                 0 -> CLEAR
-                1, 2, 3 -> PARTLY_CLOUDY
-                45, 48 -> FOG
-                51, 53, 55 -> DRIZZLE
-                56, 57 -> FREEZING_DRIZZLE
-                61, 63, 65 -> RAIN
-                66, 67 -> FREEZING_RAIN
-                71, 73, 75 -> SNOW
+                1 -> MOSTLY_CLEAR
+                2 -> PARTLY_CLOUDY
+                3 -> OVERCAST
+                45 -> FOG
+                48 -> RIME_FOG
+                51 -> LIGHT_DRIZZLE
+                53 -> MODERATE_DRIZZLE
+                55 -> DENSE_DRIZZLE
+                56 -> LIGHT_FREEZING_DRIZZLE
+                57 -> DENSE_FREEZING_DRIZZLE
+                61 -> LIGHT_RAIN
+                63 -> MODERATE_RAIN
+                65 -> HEAVY_RAIN
+                66 -> LIGHT_FREEZING_RAIN
+                67 -> HEAVY_FREEZING_RAIN
+                71 -> SLIGHT_SNOWFALL
+                73 -> MODERATE_SNOWFALL
+                75 -> HEAVY_SNOWFALL
                 77 -> SNOW_GRAINS
-                80, 81, 82 -> SHOWERS
-                85, 86 -> SNOW_SHOWERS
+                80 -> RAIN_SHOWERS_SLIGHT
+                81 -> RAIN_SHOWERS_MODERATE
+                82 -> RAIN_SHOWERS_VIOLENT
+                85 -> SNOW_SHOWERS_SLIGHT
+                86 -> SNOW_SHOWERS_HEAVY
                 95 -> THUNDERSTORM
                 96, 99 -> THUNDERSTORM_HAIL
                 else -> VARIABLE

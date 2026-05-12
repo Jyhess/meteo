@@ -25,12 +25,12 @@ object MetNorwayMapper {
         "partlycloudy" to WeatherCondition.PARTLY_CLOUDY,
         "cloudy" to WeatherCondition.PARTLY_CLOUDY,
         "fog" to WeatherCondition.FOG,
-        "lightrain" to WeatherCondition.RAIN,
-        "rain" to WeatherCondition.RAIN,
-        "heavyrain" to WeatherCondition.RAIN,
-        "lightsnow" to WeatherCondition.SNOW,
-        "snow" to WeatherCondition.SNOW,
-        "heavysnow" to WeatherCondition.SNOW,
+        "lightrain" to WeatherCondition.LIGHT_RAIN,
+        "rain" to WeatherCondition.MODERATE_RAIN,
+        "heavyrain" to WeatherCondition.HEAVY_RAIN,
+        "lightsnow" to WeatherCondition.SLIGHT_SNOWFALL,
+        "snow" to WeatherCondition.MODERATE_SNOWFALL,
+        "heavysnow" to WeatherCondition.HEAVY_SNOWFALL,
         "thunderstorm" to WeatherCondition.THUNDERSTORM
     )
 

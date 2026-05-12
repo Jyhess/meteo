@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -64,18 +65,24 @@ internal fun OverviewPanel(data: WeatherData) {
                     }
                 }
                 Spacer(Modifier.height(10.dp))
-                Text(
-                    stringResource(
-                        R.string.today_summary,
-                        stringResource(R.string.today),
-                        today.minC,
-                        today.maxC,
-                        weatherEmoji(today.label),
-                        today.label,
-                    ),
-                    color = MaterialTheme.colorScheme.secondary,
-                    style = MaterialTheme.typography.labelLarge,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    today.label.let { WeatherIcon(it, Modifier.size(24.dp)) }
+                    Text(
+                        stringResource(
+                            R.string.today_summary,
+                            stringResource(R.string.today),
+                            today.minC,
+                            today.maxC,
+                            "", // On vide l'emoji car on utilise l'icone
+                            today.label,
+                        ),
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
             }
         }
     }
@@ -93,7 +100,11 @@ private fun PeriodCell(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
-        Text(if (label != null) weatherEmoji(label) else "?", style = MaterialTheme.typography.titleLarge)
+        if (label != null) {
+            WeatherIcon(label)
+        } else {
+            Text("?", style = MaterialTheme.typography.titleLarge)
+        }
         Text(
             if (tempC != null) "${tempC}°" else "?°",
             style = MaterialTheme.typography.headlineSmall,

@@ -52,10 +52,7 @@ internal fun HourlyPanel(hours: List<HourRow>) {
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(
-                        weatherEmoji(h.label),
-                        style = MaterialTheme.typography.titleLarge,
-                    )
+                    WeatherIcon(h.label)
                     Text(
                         "${h.tempC}°",
                         style = MaterialTheme.typography.titleLarge,

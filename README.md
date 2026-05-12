@@ -44,5 +44,9 @@ L'application utilise une architecture évolutive basée sur le pattern **Adapte
 
 Ce projet est sous licence **GPL v3**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
+### Third party
+
+Icons are from [Airycons](https://github.com/HaroleDev/Airycons).
+
 ---
 *Développé avec passion pour une météo toujours accessible.*
