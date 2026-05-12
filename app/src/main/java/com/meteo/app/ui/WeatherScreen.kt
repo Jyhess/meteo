@@ -40,6 +40,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.meteo.app.R
+import com.meteo.app.domain.WeatherCondition
 import com.meteo.app.domain.WeatherData
 
 @Composable
@@ -51,33 +52,19 @@ fun WeatherRoute(
     val state by viewModel.state.collectAsState()
 
     val backgrounds = remember {
-        listOf(
-            R.drawable.sun,
-            R.drawable.sun_and_cloud,
-            R.drawable.light_cloud,
-            R.drawable.fog,
-            R.drawable.light_rain,
-            R.drawable.rain,
-            R.drawable.storm,
-            R.drawable.snow
-        )
+        WeatherCondition.entries.map { it.bgRes }.distinct()
     }
     var currentBgIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(state) {
         val s = state
         if (s is WeatherUiState.Success) {
-            val label = s.data.overview.today.label.lowercase()
-            val bestIndex = when {
-                "orage" in label -> backgrounds.indexOf(R.drawable.storm)
-                "neige" in label -> backgrounds.indexOf(R.drawable.snow)
-                "pluie" in label || "averse" in label || "bruine" in label -> backgrounds.indexOf(R.drawable.rain)
-                "brouillard" in label -> backgrounds.indexOf(R.drawable.fog)
-                "dégagé" in label || "ensoleillé" in label -> backgrounds.indexOf(R.drawable.sun)
-                "nuage" in label -> backgrounds.indexOf(R.drawable.sun_and_cloud)
-                else -> backgrounds.indexOf(R.drawable.sun)
-            }.takeIf { it != -1 } ?: 0
-            currentBgIndex = bestIndex
+            val condition = WeatherCondition.entries.find { it.description == s.data.overview.today.label }
+                ?: WeatherCondition.UNKNOWN
+            val index = backgrounds.indexOf(condition.bgRes)
+            if (index != -1) {
+                currentBgIndex = index
+            }
         }
     }
 
