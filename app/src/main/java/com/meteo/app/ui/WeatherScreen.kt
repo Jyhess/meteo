@@ -2,7 +2,6 @@ package com.meteo.app.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,7 +53,9 @@ fun WeatherRoute(
     val backgrounds = remember {
         WeatherCondition.entries.map { it.bgRes }.distinct()
     }
-    var currentBgIndex by remember { mutableIntStateOf(0) }
+    var currentBgIndex by remember { 
+        mutableIntStateOf(backgrounds.indexOf(R.drawable.bg_clear).takeIf { it != -1 } ?: 0) 
+    }
 
     LaunchedEffect(state) {
         val s = state
@@ -75,11 +76,7 @@ fun WeatherRoute(
         Image(
             painter = painterResource(id = backgrounds[currentBgIndex]),
             contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable {
-                    currentBgIndex = (currentBgIndex + 1) % backgrounds.size
-                },
+            modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
 
@@ -130,16 +127,14 @@ fun WeatherRoute(
                     }
                 }
                 is WeatherUiState.Success -> {
-                    Box(modifier = Modifier.fillMaxSize().clickable { currentBgIndex = (currentBgIndex + 1) % backgrounds.size }) {
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            WeatherContent(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(padding),
-                                data = s.data,
-                            )
-                            VersionDisplay()
-                        }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        WeatherContent(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(padding),
+                            data = s.data,
+                        )
+                        VersionDisplay()
                     }
                 }
             }

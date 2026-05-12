@@ -7,9 +7,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/airy_mostly_clear"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_launcher"
+        android:roundIcon="@drawable/airy_mostly_clear"
         android:supportsRtl="true"
         android:theme="@style/Theme.Meteo"
         android:usesCleartextTraffic="false">
