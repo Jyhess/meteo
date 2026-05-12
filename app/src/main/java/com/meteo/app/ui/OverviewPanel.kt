@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,9 +56,18 @@ internal fun OverviewPanel(data: WeatherData) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    data.overview.periodSlots.forEach { slot ->
+                    data.overview.periodSlots.forEachIndexed { index, slot ->
+                        // Si le créneau actuel est le Soir et le suivant est le Matin, 
+                        // ou si la date change entre deux créneaux, on affiche un séparateur de nuit.
+                        if (index > 0) {
+                            val prev = data.overview.periodSlots[index - 1]
+                            if (prev.date != slot.date) {
+                                NightSeparator()
+                            }
+                        }
+
                         PeriodCell(
-                            title = slot.type.label,
+                            title = slot.displayTitle,
                             tempC = slot.tempC,
                             label = slot.label,
                             precipPct = slot.precipPct
@@ -115,6 +125,25 @@ private fun PeriodCell(
             if (precipPct != null) stringResource(R.string.precipitation_pct, precipPct) else "💧 ?",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.secondary,
+        )
+    }
+}
+
+@Composable
+private fun NightSeparator() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.padding(horizontal = 4.dp)
+    ) {
+        Spacer(
+            modifier = Modifier
+                .width(2.dp)
+                .height(40.dp)
+                .background(
+                    color = Color(0xFF1A237E).copy(alpha = 0.4f), // Bleu très foncé nuit
+                    shape = RoundedCornerShape(1.dp)
+                )
         )
     }
 }

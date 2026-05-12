@@ -86,26 +86,40 @@ object MetNorwayMapper {
             currentTempC = currentSlot.data.instant.details.airTemperature?.toInt()
         )
 
-        val todayLocalDate = LocalDate.now()
-        val periodSlots = DayPeriodType.entries.map { type ->
-            val best = series.filter {
-                val t = LocalDateTime.parse(it.time.take(19))
-                t.toLocalDate() == todayLocalDate
-            }.minByOrNull {
-                val t = LocalDateTime.parse(it.time.take(19))
-                kotlin.math.abs(t.hour - type.preferredHour)
-            }
-            if (best != null) {
-                PeriodSlot(
-                    type = type,
-                    tempC = best.data.instant.details.airTemperature?.toInt(),
-                    label = (best.data.next1h ?: best.data.next6h)?.summary?.symbolCode?.toDescription(),
-                    precipPct = (best.data.next1h ?: best.data.next6h)?.details?.precipitationProbability?.toInt()
-                )
-            } else {
-                PeriodSlot(type = type, tempC = null, label = null, precipPct = null)
+        val currentNow = LocalDateTime.now()
+        val allTargetTimes = (0..1).flatMap { dayOffset ->
+            val date = currentNow.toLocalDate().plusDays(dayOffset.toLong())
+            DayPeriodType.entries.map { type ->
+                date to type
             }
         }
+
+        val periodSlots = allTargetTimes
+            .filter { (date, type) ->
+                val targetTime = date.atTime(type.preferredHour, 0)
+                targetTime >= currentNow.minusHours(1)
+            }
+            .take(4)
+            .map { (date, type) ->
+                val best = series.filter {
+                    val t = LocalDateTime.parse(it.time.take(19))
+                    t.toLocalDate() == date
+                }.minByOrNull {
+                    val t = LocalDateTime.parse(it.time.take(19))
+                    kotlin.math.abs(t.hour - type.preferredHour)
+                }
+                if (best != null) {
+                    PeriodSlot(
+                        type = type,
+                        date = date,
+                        tempC = best.data.instant.details.airTemperature?.toInt(),
+                        label = (best.data.next1h ?: best.data.next6h)?.summary?.symbolCode?.toDescription(),
+                        precipPct = (best.data.next1h ?: best.data.next6h)?.details?.precipitationProbability?.toInt()
+                    )
+                } else {
+                    PeriodSlot(type = type, date = date, tempC = null, label = null, precipPct = null)
+                }
+            }
 
         return WeatherData(
             locationLabel = locationLabel,

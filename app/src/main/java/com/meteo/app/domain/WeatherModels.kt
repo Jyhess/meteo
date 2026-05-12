@@ -1,5 +1,6 @@
 package com.meteo.app.domain
 
+import java.time.LocalDate
 import com.meteo.app.R
 
 data class WeatherData(
@@ -92,10 +93,14 @@ enum class DayPeriodType(val label: String, val preferredHour: Int) {
 
 data class PeriodSlot(
     val type: DayPeriodType,
+    val date: LocalDate,
     val tempC: Int?,
     val label: String?,
     val precipPct: Int?,
-)
+) {
+    val displayTitle: String
+        get() = type.label
+}
 
 data class DayPeriod(
     val title: String,

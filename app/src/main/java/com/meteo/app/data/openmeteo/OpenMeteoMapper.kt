@@ -124,26 +124,40 @@ object OpenMeteoMapper {
             emptyList()
         }
 
-        val todayLocalDate = LocalDate.now()
-        val periodSlots = DayPeriodType.entries.map { type ->
-            val candidates = hourlyTimes.mapIndexedNotNull { idx, iso ->
-                val t = runCatching { parseLocalDateTime(iso) }.getOrNull() ?: return@mapIndexedNotNull null
-                if (t.toLocalDate() != todayLocalDate) return@mapIndexedNotNull null
-                Triple(idx, abs(t.hour - type.preferredHour), t.hour)
-            }
-            val best = candidates.minByOrNull { it.second }
-            if (best != null) {
-                val i = best.first
-                PeriodSlot(
-                    type = type,
-                    tempC = hourlyTemps.getOrNull(i)?.roundToInt(),
-                    label = WeatherCondition.fromWMOCode(hourlyCodes.getOrNull(i)).description,
-                    precipPct = hourlyPrecip.getOrNull(i)
-                )
-            } else {
-                PeriodSlot(type = type, tempC = null, label = null, precipPct = null)
+        val currentNow = LocalDateTime.now()
+        val allTargetTimes = (0..1).flatMap { dayOffset ->
+            val date = currentNow.toLocalDate().plusDays(dayOffset.toLong())
+            DayPeriodType.entries.map { type ->
+                date to type
             }
         }
+
+        val periodSlots = allTargetTimes
+            .filter { (date, type) ->
+                val targetTime = date.atTime(type.preferredHour, 0)
+                targetTime >= currentNow.minusHours(1)
+            }
+            .take(4)
+            .map { (date, type) ->
+                val candidates = hourlyTimes.mapIndexedNotNull { idx, iso ->
+                    val t = runCatching { parseLocalDateTime(iso) }.getOrNull() ?: return@mapIndexedNotNull null
+                    if (t.toLocalDate() != date) return@mapIndexedNotNull null
+                    Triple(idx, abs(t.hour - type.preferredHour), t.hour)
+                }
+                val best = candidates.minByOrNull { it.second }
+                if (best != null) {
+                    val i = best.first
+                    PeriodSlot(
+                        type = type,
+                        date = date,
+                        tempC = hourlyTemps.getOrNull(i)?.roundToInt(),
+                        label = WeatherCondition.fromWMOCode(hourlyCodes.getOrNull(i)).description,
+                        precipPct = hourlyPrecip.getOrNull(i)
+                    )
+                } else {
+                    PeriodSlot(type = type, date = date, tempC = null, label = null, precipPct = null)
+                }
+            }
 
         val daily5 = dailyDates.asSequence().take(15).mapIndexed { index, dateStr ->
             val d = runCatching { LocalDate.parse(dateStr) }.getOrNull() ?: LocalDate.now()
