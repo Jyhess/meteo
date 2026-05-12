@@ -25,9 +25,9 @@ internal fun DailyStrip(days: List<DayForecastUi>) {
             Card(
                 modifier = Modifier.width(96.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 ),
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(12.dp),
             ) {
                 Column(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),

@@ -19,7 +19,7 @@
     <string name="late_morning">Matinée</string>
     <string name="forecast_title">Prévisions</string>
     <string name="section_next_hours">Prochaines heures</string>
-    <string name="section_5_days">5 jours</string>
+    <string name="section_15_days">15 jours</string>
     <string name="unknown_weather">Variable</string>
     <string name="clear_weather">Dégagé</string>
     <string name="no_hourly_data">Aucune donnée horaire.</string>

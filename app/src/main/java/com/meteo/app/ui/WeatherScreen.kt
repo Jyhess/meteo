@@ -156,7 +156,7 @@ private fun WeatherContent(
             }
         }
         item {
-            SectionCard(title = stringResource(R.string.section_5_days)) {
+            SectionCard(title = stringResource(R.string.section_15_days)) {
                 DailyStrip(data.daily5)
             }
         }
