@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -33,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -60,6 +63,23 @@ fun WeatherRoute(
         )
     }
     var currentBgIndex by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(state) {
+        val s = state
+        if (s is WeatherUiState.Success) {
+            val label = s.data.overview.today.label.lowercase()
+            val bestIndex = when {
+                "orage" in label -> backgrounds.indexOf(R.drawable.storm)
+                "neige" in label -> backgrounds.indexOf(R.drawable.snow)
+                "pluie" in label || "averse" in label || "bruine" in label -> backgrounds.indexOf(R.drawable.rain)
+                "brouillard" in label -> backgrounds.indexOf(R.drawable.fog)
+                "dégagé" in label || "ensoleillé" in label -> backgrounds.indexOf(R.drawable.sun)
+                "nuage" in label -> backgrounds.indexOf(R.drawable.sun_and_cloud)
+                else -> backgrounds.indexOf(R.drawable.sun)
+            }.takeIf { it != -1 } ?: 0
+            currentBgIndex = bestIndex
+        }
+    }
 
     val locationTitle = (state as? WeatherUiState.Success)?.currentLocation?.name
         ?: stringResource(R.string.app_name)
@@ -124,14 +144,54 @@ fun WeatherRoute(
                 }
                 is WeatherUiState.Success -> {
                     Box(modifier = Modifier.fillMaxSize().clickable { currentBgIndex = (currentBgIndex + 1) % backgrounds.size }) {
-                        WeatherContent(
-                            modifier = Modifier.padding(padding),
-                            data = s.data,
-                        )
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            WeatherContent(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(padding),
+                                data = s.data,
+                            )
+                            VersionDisplay()
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun VersionDisplay() {
+    val context = LocalContext.current
+    val packageInfo = remember {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0)
+        } catch (e: Exception) {
+            null
+        }
+    }
+    val versionName = packageInfo?.versionName ?: "0.1"
+    val versionCode = packageInfo?.let {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            it.longVersionCode
+        } else {
+            @Suppress("DEPRECATION")
+            it.versionCode.toLong()
+        }
+    } ?: 1
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(bottom = 12.dp),
+        contentAlignment = Alignment.CenterEnd
+    ) {
+        Text(
+            text = "Version $versionName-$versionCode    ",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.5f)
+        )
     }
 }
 

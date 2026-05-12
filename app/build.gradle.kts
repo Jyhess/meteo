@@ -1,9 +1,14 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.text.SimpleDateFormat
+import java.util.Date
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+val buildDateTime = SimpleDateFormat("yyMMdd").format(Date())
+val versionCodeInt = SimpleDateFormat("HHmm").format(Date()).toInt()
 
 android {
     namespace = "com.meteo.app"
@@ -13,8 +18,8 @@ android {
         applicationId = "com.meteo.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = versionCodeInt
+        versionName = "1.0.$buildDateTime"
     }
 
     buildTypes {
