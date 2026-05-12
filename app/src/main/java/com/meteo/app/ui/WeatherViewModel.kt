@@ -15,7 +15,11 @@ import kotlinx.coroutines.launch
 
 sealed class WeatherUiState {
     data object Loading : WeatherUiState()
-    data class Success(val data: WeatherScreenUi, val currentLocation: SavedLocation) : WeatherUiState()
+    data class Success(
+        val data: WeatherScreenUi,
+        val currentLocation: SavedLocation,
+        val isOffline: Boolean = false
+    ) : WeatherUiState()
     data class Error(val message: String) : WeatherUiState()
 }
 
@@ -47,18 +51,25 @@ class WeatherViewModel(
             runCatching {
                 repository.fetchWeather(location.latitude, location.longitude, location.name)
             }.fold(
-                onSuccess = { 
-                    _state.value = WeatherUiState.Success(it, location)
+                onSuccess = { weather ->
+                    _state.value = WeatherUiState.Success(weather, location, isOffline = false)
+                    locationStore.saveLastWeather(location, weather)
                     if (addToHistory) {
                         locationStore.addToHistory(location)
                         _history.value = locationStore.getHistory()
                     }
                 },
-            ) { e ->
-                _state.value = WeatherUiState.Error(
-                    e.message ?: "Erreur inconnue",
-                )
-            }
+                onFailure = { e ->
+                    val lastKnown = locationStore.getLastWeather(location)
+                    if (lastKnown != null) {
+                        _state.value = WeatherUiState.Success(lastKnown, location, isOffline = true)
+                    } else {
+                        _state.value = WeatherUiState.Error(
+                            e.message ?: "Erreur inconnue",
+                        )
+                    }
+                }
+            )
         }
     }
 

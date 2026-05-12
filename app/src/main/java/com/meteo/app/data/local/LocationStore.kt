@@ -5,6 +5,7 @@ import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.meteo.app.domain.SavedLocation
+import com.meteo.app.domain.WeatherScreenUi
 
 class LocationStore(context: Context) {
     private val prefs = context.getSharedPreferences("meteo_locations", Context.MODE_PRIVATE)
@@ -30,6 +31,20 @@ class LocationStore(context: Context) {
     private fun saveHistory(history: List<SavedLocation>) {
         val json = gson.toJson(history)
         prefs.edit { putString("history", json) }
+    }
+
+    fun saveLastWeather(location: SavedLocation, weather: WeatherScreenUi) {
+        val json = gson.toJson(weather)
+        prefs.edit { putString("last_weather_${location.name}", json) }
+    }
+
+    fun getLastWeather(location: SavedLocation): WeatherScreenUi? {
+        val json = prefs.getString("last_weather_${location.name}", null) ?: return null
+        return try {
+            gson.fromJson(json, WeatherScreenUi::class.java)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     fun addToHistory(location: SavedLocation) {

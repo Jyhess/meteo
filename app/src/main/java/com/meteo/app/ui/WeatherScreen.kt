@@ -4,13 +4,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -22,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.meteo.app.R
@@ -51,12 +58,17 @@ fun WeatherRoute(
 
     Scaffold(
         topBar = {
-            WeatherTopBar(
-                locationTitle = locationTitle,
-                viewModel = viewModel,
-                onRefresh = onRefresh,
-                onCurrentLocationRequest = onRequestLocation
-            )
+            Column {
+                WeatherTopBar(
+                    locationTitle = locationTitle,
+                    viewModel = viewModel,
+                    onRefresh = onRefresh,
+                    onCurrentLocationRequest = onRequestLocation
+                )
+                if (state is WeatherUiState.Success && (state as WeatherUiState.Success).isOffline) {
+                    OfflineWarningBanner()
+                }
+            }
         },
     ) { padding ->
         when (val s = state) {
@@ -96,6 +108,31 @@ fun WeatherRoute(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun OfflineWarningBanner() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.errorContainer)
+            .padding(vertical = 4.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.CloudOff,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onErrorContainer
+        )
+        Spacer(Modifier.size(8.dp))
+        Text(
+            text = "Mode hors connexion - Données locales",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onErrorContainer
+        )
     }
 }
 
