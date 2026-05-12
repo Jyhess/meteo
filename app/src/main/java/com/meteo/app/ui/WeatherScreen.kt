@@ -40,7 +40,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.meteo.app.R
-import com.meteo.app.domain.WeatherScreenUi
+import com.meteo.app.domain.WeatherData
 
 @Composable
 fun WeatherRoute(
@@ -223,7 +223,7 @@ private fun OfflineWarningBanner() {
 @Composable
 private fun WeatherContent(
     modifier: Modifier = Modifier,
-    data: WeatherScreenUi,
+    data: WeatherData,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -231,7 +231,7 @@ private fun WeatherContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
-            ForecastPanel(data)
+            OverviewPanel(data)
         }
         item {
             SectionCard(title = stringResource(R.string.section_next_hours)) {

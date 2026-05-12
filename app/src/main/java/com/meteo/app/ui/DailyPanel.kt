@@ -17,10 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.meteo.app.domain.DayForecastUi
+import com.meteo.app.domain.DayForecast
 
 @Composable
-internal fun DailyPanel(days: List<DayForecastUi>) {
+internal fun DailyPanel(days: List<DayForecast>) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(days, key = { "${it.weekdayLabel} ${it.dayOfMonth}" }) { d ->
             Card(

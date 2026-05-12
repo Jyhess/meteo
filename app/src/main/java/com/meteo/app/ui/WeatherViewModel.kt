@@ -7,7 +7,7 @@ import com.meteo.app.data.WeatherRepository
 import com.meteo.app.data.api.GeocodingResult
 import com.meteo.app.data.local.LocationStore
 import com.meteo.app.domain.SavedLocation
-import com.meteo.app.domain.WeatherScreenUi
+import com.meteo.app.domain.WeatherData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 sealed class WeatherUiState {
     data object Loading : WeatherUiState()
     data class Success(
-        val data: WeatherScreenUi,
+        val data: WeatherData,
         val currentLocation: SavedLocation,
         val isOffline: Boolean = false
     ) : WeatherUiState()

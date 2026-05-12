@@ -1,13 +1,13 @@
-package com.meteo.app.data
+package com.meteo.app.data.openmeteo
 
+import com.meteo.app.domain.WeatherData
+import com.meteo.app.data.WeatherProvider
 import com.meteo.app.data.api.OpenMeteoService
-import com.meteo.app.domain.WeatherMapper
-import com.meteo.app.domain.WeatherScreenUi
 
 class OpenMeteoProvider(private val api: OpenMeteoService) : WeatherProvider {
     override val priority: Int = 1
 
-    override suspend fun fetchWeather(latitude: Double, longitude: Double, locationLabel: String): WeatherScreenUi {
+    override suspend fun fetchWeather(latitude: Double, longitude: Double, locationLabel: String): WeatherData {
         val response = api.forecast(
             latitude = latitude,
             longitude = longitude,
@@ -17,6 +17,6 @@ class OpenMeteoProvider(private val api: OpenMeteoService) : WeatherProvider {
             forecastDays = 16,
             timezone = "auto",
         )
-        return WeatherMapper.buildUi(response, locationLabel)
+        return OpenMeteoMapper.buildUi(response, locationLabel)
     }
 }

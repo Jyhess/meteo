@@ -20,10 +20,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.meteo.app.R
-import com.meteo.app.domain.HourRowUi
+import com.meteo.app.domain.HourRow
 
 @Composable
-internal fun HourlyPanel(hours: List<HourRowUi>) {
+internal fun HourlyPanel(hours: List<HourRow>) {
     if (hours.isEmpty()) {
         Text(stringResource(R.string.no_hourly_data), style = MaterialTheme.typography.bodyMedium)
         return

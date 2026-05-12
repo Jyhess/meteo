@@ -1,34 +1,26 @@
-package com.meteo.app.domain
+package com.meteo.app.data.openmeteo
 
 import com.meteo.app.data.api.ForecastResponse
+import com.meteo.app.domain.WeatherData
+import com.meteo.app.domain.DayForecast
+import com.meteo.app.domain.HourRow
+import com.meteo.app.domain.DayPeriod
+import com.meteo.app.domain.DayPeriodType
+import com.meteo.app.domain.NamedPeriod
+import com.meteo.app.domain.PeriodSlot
+import com.meteo.app.domain.WeatherOverview
+import com.meteo.app.domain.WeatherCondition
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.round
 
-object WeatherMapper {
+object OpenMeteoMapper {
 
     private val localeFr = Locale.FRENCH
-
-    fun describeCode(code: Int?): String {
-        if (code == null) return "—"
-        return when (code) {
-            0 -> "Dégagé"
-            1, 2, 3 -> "Partiellement nuageux"
-            45, 48 -> "Brouillard"
-            51, 53, 55 -> "Bruine"
-            56, 57 -> "Bruine verglaçante"
-            61, 63, 65 -> "Pluie"
-            66, 67 -> "Pluie verglaçante"
-            71, 73, 75 -> "Neige"
-            77 -> "Grains de neige"
-            80, 81, 82 -> "Averses"
-            85, 86 -> "Averses de neige"
-            95 -> "Orages"
-            96, 99 -> "Orages avec grêle"
-            else -> "Variable"
-        }
-    }
 
     private val hourMinuteFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
@@ -46,13 +38,13 @@ object WeatherMapper {
     }
 
     private fun weekdayShort(date: LocalDate): String =
-        date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, localeFr)
+        date.dayOfWeek.getDisplayName(TextStyle.SHORT, localeFr)
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase(localeFr) else it.toString() }
 
     fun buildUi(
         response: ForecastResponse,
         locationLabel: String,
-    ): WeatherScreenUi {
+    ): WeatherData {
         val hourly = response.hourly
         val daily = response.daily
         val current = response.current
@@ -80,12 +72,12 @@ object WeatherMapper {
             val timeLabel = runCatching {
                 parseLocalDateTime(t).format(hourMinuteFormatter)
             }.getOrDefault("—")
-            HourRowUi(
+            HourRow(
                 timeLabel = timeLabel,
                 tempC = hourlyTemps.getOrNull(i)?.roundToInt() ?: 0,
                 precipPct = hourlyPrecip.getOrNull(i),
                 windSpeed = hourlyWind.getOrNull(i)?.roundToInt() ?: 0,
-                label = describeCode(hourlyCodes.getOrNull(i)),
+                label = WeatherCondition.fromWMOCode(hourlyCodes.getOrNull(i)).description,
             )
         }
 
@@ -95,11 +87,11 @@ object WeatherMapper {
         val currentTemp = current?.temperature?.roundToInt()
             ?: hourlyTemps.getOrNull(startIndex)?.roundToInt()
 
-        val today = DayPeriodUi(
+        val today = DayPeriod(
             title = "Aujourd'hui",
             minC = todayMin,
             maxC = todayMax,
-            label = describeCode(todayCode),
+            label = WeatherCondition.fromWMOCode(todayCode).description,
             currentTempC = currentTemp,
         )
 
@@ -122,14 +114,35 @@ object WeatherMapper {
                     hourlyTemps = hourlyTemps,
                     hourlyCodes = hourlyCodes,
                 )
-                NamedPeriodUi(
+                NamedPeriod(
                     periodName = target.name,
                     tempC = best.first,
-                    label = describeCode(best.second),
+                    label = WeatherCondition.fromWMOCode(best.second).description,
                 )
             }
         } else {
             emptyList()
+        }
+
+        val todayLocalDate = LocalDate.now()
+        val periodSlots = DayPeriodType.entries.map { type ->
+            val candidates = hourlyTimes.mapIndexedNotNull { idx, iso ->
+                val t = runCatching { parseLocalDateTime(iso) }.getOrNull() ?: return@mapIndexedNotNull null
+                if (t.toLocalDate() != todayLocalDate) return@mapIndexedNotNull null
+                Triple(idx, abs(t.hour - type.preferredHour), t.hour)
+            }
+            val best = candidates.minByOrNull { it.second }
+            if (best != null) {
+                val i = best.first
+                PeriodSlot(
+                    type = type,
+                    tempC = hourlyTemps.getOrNull(i)?.roundToInt(),
+                    label = WeatherCondition.fromWMOCode(hourlyCodes.getOrNull(i)).description,
+                    precipPct = hourlyPrecip.getOrNull(i)
+                )
+            } else {
+                PeriodSlot(type = type, tempC = null, label = null, precipPct = null)
+            }
         }
 
         val daily5 = dailyDates.asSequence().take(15).mapIndexed { index, dateStr ->
@@ -137,21 +150,22 @@ object WeatherMapper {
             val minC = dailyMin.getOrNull(index)?.roundToInt() ?: 0
             val maxC = dailyMax.getOrNull(index)?.roundToInt() ?: 0
             val windSpeed = dailyWind.getOrNull(index)?.roundToInt() ?: 0
-            DayForecastUi(
+            DayForecast(
                 weekdayLabel = weekdayShort(d),
                 dayOfMonth = d.dayOfMonth,
                 minC = minC,
                 maxC = maxC,
                 windSpeed = windSpeed,
-                label = describeCode(dailyCodes.getOrNull(index)),
+                label = WeatherCondition.fromWMOCode(dailyCodes.getOrNull(index)).description,
             )
         }.toList()
 
-        return WeatherScreenUi(
+        return WeatherData(
             locationLabel = locationLabel,
-            overview = WeatherOverviewUi(
+            overview = WeatherOverview(
                 today = today,
                 tomorrowSlots = tomorrowSlots,
+                periodSlots = periodSlots,
             ),
             hourly12 = hourly12,
             daily5 = daily5,
@@ -170,7 +184,7 @@ object WeatherMapper {
         val candidates = hourlyTimes.mapIndexedNotNull { idx, iso ->
             val t = runCatching { parseLocalDateTime(iso) }.getOrNull() ?: return@mapIndexedNotNull null
             if (t.toLocalDate() != date) return@mapIndexedNotNull null
-            Triple(idx, kotlin.math.abs(t.hour - preferredHour), t.hour)
+            Triple(idx, abs(t.hour - preferredHour), t.hour)
         }
         if (candidates.isEmpty()) {
             return 0 to null
@@ -182,48 +196,5 @@ object WeatherMapper {
         return temp to code
     }
 
-    private fun Double.roundToInt(): Int = kotlin.math.round(this).toInt()
+    private fun Double.roundToInt(): Int = round(this).toInt()
 }
-
-data class WeatherScreenUi(
-    val locationLabel: String,
-    val overview: WeatherOverviewUi,
-    val hourly12: List<HourRowUi>,
-    val daily5: List<DayForecastUi>,
-)
-
-data class WeatherOverviewUi(
-    val today: DayPeriodUi,
-    val tomorrowSlots: List<NamedPeriodUi>,
-)
-
-data class DayPeriodUi(
-    val title: String,
-    val minC: Int,
-    val maxC: Int,
-    val label: String,
-    val currentTempC: Int?,
-)
-
-data class NamedPeriodUi(
-    val periodName: String,
-    val tempC: Int,
-    val label: String,
-)
-
-data class HourRowUi(
-    val timeLabel: String,
-    val tempC: Int,
-    val precipPct: Int?,
-    val windSpeed: Int,
-    val label: String,
-)
-
-data class DayForecastUi(
-    val weekdayLabel: String,
-    val dayOfMonth: Int,
-    val minC: Int,
-    val maxC: Int,
-    val windSpeed: Int,
-    val label: String,
-)

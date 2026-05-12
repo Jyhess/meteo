@@ -21,10 +21,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.meteo.app.R
-import com.meteo.app.domain.WeatherScreenUi
+import com.meteo.app.domain.WeatherData
 
 @Composable
-internal fun ForecastPanel(data: WeatherScreenUi) {
+internal fun OverviewPanel(data: WeatherData) {
     val today = data.overview.today
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -54,10 +54,14 @@ internal fun ForecastPanel(data: WeatherScreenUi) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    PeriodCell(stringResource(R.string.afternoon), today.currentTempC ?: today.maxC, today.label, 70)
-                    PeriodCell(stringResource(R.string.evening), today.maxC - 2, today.label, 70)
-                    PeriodCell(stringResource(R.string.night), today.minC, stringResource(R.string.unknown_weather), 70)
-                    PeriodCell(stringResource(R.string.late_morning), today.minC + 1, stringResource(R.string.clear_weather), 50)
+                    data.overview.periodSlots.forEach { slot ->
+                        PeriodCell(
+                            title = slot.type.label,
+                            tempC = slot.tempC,
+                            label = slot.label,
+                            precipPct = slot.precipPct
+                        )
+                    }
                 }
                 Spacer(Modifier.height(10.dp))
                 Text(
@@ -80,24 +84,24 @@ internal fun ForecastPanel(data: WeatherScreenUi) {
 @Composable
 private fun PeriodCell(
     title: String,
-    tempC: Int,
-    label: String,
-    precipPct: Int,
+    tempC: Int?,
+    label: String?,
+    precipPct: Int?,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
-        Text(weatherEmoji(label), style = MaterialTheme.typography.titleLarge)
+        Text(if (label != null) weatherEmoji(label) else "?", style = MaterialTheme.typography.titleLarge)
         Text(
-            "${tempC}°",
+            if (tempC != null) "${tempC}°" else "?°",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold,
         )
         Text(
-            stringResource(R.string.precipitation_pct, precipPct),
+            if (precipPct != null) stringResource(R.string.precipitation_pct, precipPct) else "💧 ?",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.secondary,
         )

@@ -2,7 +2,9 @@ package com.meteo.app.data
 
 import com.meteo.app.data.api.MetNorwayService
 import com.meteo.app.data.api.OpenMeteoService
-import com.meteo.app.domain.WeatherScreenUi
+import com.meteo.app.data.metnorway.MetNorwayProvider
+import com.meteo.app.data.openmeteo.OpenMeteoProvider
+import com.meteo.app.domain.WeatherData
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -35,7 +37,7 @@ class WeatherRepository {
         MetNorwayProvider(metNorwayService)
     ).sortedBy { it.priority }
 
-    suspend fun fetchWeather(latitude: Double, longitude: Double, locationLabel: String): WeatherScreenUi {
+    suspend fun fetchWeather(latitude: Double, longitude: Double, locationLabel: String): WeatherData {
         var lastException: Exception? = null
         
         for (provider in providers) {
