@@ -28,7 +28,6 @@ internal fun WeatherTopBar(
     locationTitle: String,
     viewModel: WeatherViewModel,
     onRefresh: () -> Unit,
-    onSettingsClick: () -> Unit,
     onCurrentLocationRequest: () -> Unit,
 ) {
     var isSearching by remember { mutableStateOf(value = false) }
@@ -189,9 +188,6 @@ internal fun WeatherTopBar(
                 }
                 IconButton(onClick = onRefresh) {
                     Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_refresh))
-                }
-                IconButton(onClick = onSettingsClick) {
-                    Icon(Icons.Default.Settings, contentDescription = "Paramètres")
                 }
             }
         },

@@ -35,15 +35,6 @@ fun WeatherRoute(
 ) {
     val state by viewModel.state.collectAsState()
     var showLocationDialog by remember { mutableStateOf(false) }
-    var currentScreen by remember { mutableStateOf("weather") }
-
-    if (currentScreen == "preferences") {
-        PreferencesScreen(
-            viewModel = viewModel,
-            onBack = { currentScreen = "weather" }
-        )
-        return
-    }
 
     val locationTitle = (state as? WeatherUiState.Success)?.currentLocation?.name
         ?: stringResource(R.string.app_name)
@@ -64,7 +55,6 @@ fun WeatherRoute(
                 locationTitle = locationTitle,
                 viewModel = viewModel,
                 onRefresh = onRefresh,
-                onSettingsClick = { currentScreen = "preferences" },
                 onCurrentLocationRequest = onRequestLocation
             )
         },
