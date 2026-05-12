@@ -1,7 +1,10 @@
 package com.meteo.app.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,11 +26,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.meteo.app.R
@@ -40,71 +46,90 @@ fun WeatherRoute(
     onRefresh: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
-    var showLocationDialog by remember { mutableStateOf(false) }
+
+    val backgrounds = remember {
+        listOf(
+            R.drawable.sun,
+            R.drawable.sun_and_cloud,
+            R.drawable.light_cloud,
+            R.drawable.fog,
+            R.drawable.light_rain,
+            R.drawable.rain,
+            R.drawable.storm,
+            R.drawable.snow
+        )
+    }
+    var currentBgIndex by remember { mutableIntStateOf(0) }
 
     val locationTitle = (state as? WeatherUiState.Success)?.currentLocation?.name
         ?: stringResource(R.string.app_name)
 
-    if (showLocationDialog) {
-        LocationSelectionDialog(
-            viewModel = viewModel,
-            onDismiss = {
-                viewModel.clearSearch()
-            },
-            onCurrentLocationRequest = onRequestLocation
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = backgrounds[currentBgIndex]),
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable {
+                    currentBgIndex = (currentBgIndex + 1) % backgrounds.size
+                },
+            contentScale = ContentScale.Crop
         )
-    }
 
-    Scaffold(
-        topBar = {
-            Column {
-                WeatherTopBar(
-                    locationTitle = locationTitle,
-                    viewModel = viewModel,
-                    onRefresh = onRefresh,
-                    onCurrentLocationRequest = onRequestLocation
-                )
-                if (state is WeatherUiState.Success && (state as WeatherUiState.Success).isOffline) {
-                    OfflineWarningBanner()
-                }
-            }
-        },
-    ) { padding ->
-        when (val s = state) {
-            is WeatherUiState.Loading -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    CircularProgressIndicator()
-                    Spacer(Modifier.height(16.dp))
-                    Text(stringResource(R.string.loading), style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-            is WeatherUiState.Error -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(s.message, style = MaterialTheme.typography.bodyLarge)
-                    Spacer(Modifier.height(16.dp))
-                    Button(onClick = onRefresh) {
-                        Text(stringResource(R.string.retry))
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                Column {
+                    WeatherTopBar(
+                        locationTitle = locationTitle,
+                        viewModel = viewModel,
+                        onRefresh = onRefresh,
+                        onCurrentLocationRequest = onRequestLocation
+                    )
+                    if (state is WeatherUiState.Success && (state as WeatherUiState.Success).isOffline) {
+                        OfflineWarningBanner()
                     }
                 }
-            }
-            is WeatherUiState.Success -> {
-                WeatherContent(
-                    modifier = Modifier.padding(padding),
-                    data = s.data,
-                )
+            },
+        ) { padding ->
+            when (val s = state) {
+                is WeatherUiState.Loading -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(Modifier.height(16.dp))
+                        Text(stringResource(R.string.loading), style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+                is WeatherUiState.Error -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(s.message, style = MaterialTheme.typography.bodyLarge)
+                        Spacer(Modifier.height(16.dp))
+                        Button(onClick = onRefresh) {
+                            Text(stringResource(R.string.retry))
+                        }
+                    }
+                }
+                is WeatherUiState.Success -> {
+                    Box(modifier = Modifier.fillMaxSize().clickable { currentBgIndex = (currentBgIndex + 1) % backgrounds.size }) {
+                        WeatherContent(
+                            modifier = Modifier.padding(padding),
+                            data = s.data,
+                        )
+                    }
+                }
             }
         }
     }
@@ -141,9 +166,7 @@ private fun WeatherContent(
     data: WeatherScreenUi,
 ) {
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -152,12 +175,12 @@ private fun WeatherContent(
         }
         item {
             SectionCard(title = stringResource(R.string.section_next_hours)) {
-                HourlyRow(data.hourly12)
+                HourlyPanel(data.hourly12)
             }
         }
         item {
             SectionCard(title = stringResource(R.string.section_15_days)) {
-                DailyStrip(data.daily5)
+                DailyPanel(data.daily5)
             }
         }
     }

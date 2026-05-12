@@ -13,19 +13,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.meteo.app.domain.DayForecastUi
 
 @Composable
-internal fun DailyStrip(days: List<DayForecastUi>) {
+internal fun DailyPanel(days: List<DayForecastUi>) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(days, key = { "${it.weekdayLabel} ${it.dayOfMonth}" }) { d ->
             Card(
                 modifier = Modifier.width(96.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    containerColor = Color.White.copy(alpha = 0.5f),
                 ),
                 shape = RoundedCornerShape(12.dp),
             ) {

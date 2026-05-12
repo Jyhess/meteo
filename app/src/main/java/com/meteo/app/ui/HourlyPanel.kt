@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -22,7 +23,7 @@ import com.meteo.app.R
 import com.meteo.app.domain.HourRowUi
 
 @Composable
-internal fun HourlyRow(hours: List<HourRowUi>) {
+internal fun HourlyPanel(hours: List<HourRowUi>) {
     if (hours.isEmpty()) {
         Text(stringResource(R.string.no_hourly_data), style = MaterialTheme.typography.bodyMedium)
         return
@@ -35,7 +36,7 @@ internal fun HourlyRow(hours: List<HourRowUi>) {
                 modifier = Modifier.width(96.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    containerColor = Color.White.copy(alpha = 0.5f),
                 ),
             ) {
                 Column(
