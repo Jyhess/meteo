@@ -65,7 +65,10 @@ fun WeatherRoute(
     LaunchedEffect(state) {
         val s = state
         if (s is WeatherUiState.Success) {
-            val condition = WeatherCondition.entries.find { it.description == s.data.overview.today.label }
+            val currentHourLabel = s.data.hourly12.firstOrNull()?.label
+            val condition = WeatherCondition.entries.find {
+                it.description == (currentHourLabel ?: s.data.overview.today.label)
+            }
                 ?: WeatherCondition.UNKNOWN
             val index = backgrounds.indexOf(condition.bgRes)
             if (index != -1) {
