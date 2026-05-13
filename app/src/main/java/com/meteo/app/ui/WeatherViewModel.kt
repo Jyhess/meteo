@@ -18,7 +18,8 @@ sealed class WeatherUiState {
     data class Success(
         val data: WeatherData,
         val currentLocation: SavedLocation,
-        val isOffline: Boolean = false
+        val isOffline: Boolean = false,
+        val isRefreshing: Boolean = false,
     ) : WeatherUiState()
     data class Error(val message: String) : WeatherUiState()
 }
@@ -47,12 +48,30 @@ class WeatherViewModel(
 
     fun load(location: SavedLocation, addToHistory: Boolean = false) {
         viewModelScope.launch {
-            _state.value = WeatherUiState.Loading
+            val lastKnown = locationStore.getLastWeather(location)
+
+            if (lastKnown != null) {
+                // Affiche immédiatement les données locales, puis rafraîchit en arrière-plan.
+                _state.value = WeatherUiState.Success(
+                    data = lastKnown,
+                    currentLocation = location,
+                    isOffline = true,
+                    isRefreshing = true,
+                )
+            } else {
+                _state.value = WeatherUiState.Loading
+            }
+
             runCatching {
                 repository.fetchWeather(location.latitude, location.longitude, location.name)
             }.fold(
                 onSuccess = { weather ->
-                    _state.value = WeatherUiState.Success(weather, location, isOffline = false)
+                    _state.value = WeatherUiState.Success(
+                        data = weather,
+                        currentLocation = location,
+                        isOffline = false,
+                        isRefreshing = false,
+                    )
                     locationStore.saveLastWeather(location, weather)
                     if (addToHistory) {
                         locationStore.addToHistory(location)
@@ -60,12 +79,16 @@ class WeatherViewModel(
                     }
                 },
                 onFailure = { e ->
-                    val lastKnown = locationStore.getLastWeather(location)
-                    if (lastKnown != null) {
-                        _state.value = WeatherUiState.Success(lastKnown, location, isOffline = true)
-                    } else {
+                    if (lastKnown == null) {
                         _state.value = WeatherUiState.Error(
                             e.message ?: "Erreur inconnue",
+                        )
+                    } else {
+                        _state.value = WeatherUiState.Success(
+                            data = lastKnown,
+                            currentLocation = location,
+                            isOffline = true,
+                            isRefreshing = false,
                         )
                     }
                 }

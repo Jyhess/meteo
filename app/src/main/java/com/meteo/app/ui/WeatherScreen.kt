@@ -99,8 +99,14 @@ fun WeatherRoute(
                         onSettingsClick = { currentScreen = "options" },
                         onCurrentLocationRequest = onRequestLocation
                     )
-                    if (state is WeatherUiState.Success && (state as WeatherUiState.Success).isOffline) {
-                        OfflineWarningBanner()
+                    if (state is WeatherUiState.Success) {
+                        val successState = state as WeatherUiState.Success
+                        if (successState.isRefreshing) {
+                            BackgroundLoadingBanner()
+                        }
+                        else if (successState.isOffline) {
+                            OfflineWarningBanner()
+                        }
                     }
                 }
             },
@@ -147,6 +153,30 @@ fun WeatherRoute(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun BackgroundLoadingBanner() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .padding(vertical = 4.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(16.dp),
+            strokeWidth = 2.dp,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+        Spacer(Modifier.size(8.dp))
+        Text(
+            text = "Actualisation en cours...",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
     }
 }
 
