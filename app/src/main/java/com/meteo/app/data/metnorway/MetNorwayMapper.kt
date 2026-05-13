@@ -114,10 +114,11 @@ object MetNorwayMapper {
                         date = date,
                         tempC = best.data.instant.details.airTemperature?.toInt(),
                         label = (best.data.next1h ?: best.data.next6h)?.summary?.symbolCode?.toDescription(),
-                        precipPct = (best.data.next1h ?: best.data.next6h)?.details?.precipitationProbability?.toInt()
+                        precipPct = (best.data.next1h ?: best.data.next6h)?.details?.precipitationProbability?.toInt(),
+                        windSpeed = best.data.instant.details.windSpeed?.toInt()
                     )
                 } else {
-                    PeriodSlot(type = type, date = date, tempC = null, label = null, precipPct = null)
+                    PeriodSlot(type = type, date = date, tempC = null, label = null, precipPct = null, windSpeed = null)
                 }
             }
 

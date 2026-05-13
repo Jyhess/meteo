@@ -152,10 +152,11 @@ object OpenMeteoMapper {
                         date = date,
                         tempC = hourlyTemps.getOrNull(i)?.roundToInt(),
                         label = WeatherCondition.fromWMOCode(hourlyCodes.getOrNull(i)).description,
-                        precipPct = hourlyPrecip.getOrNull(i)
+                        precipPct = hourlyPrecip.getOrNull(i),
+                        windSpeed = hourlyWind.getOrNull(i)?.roundToInt()
                     )
                 } else {
-                    PeriodSlot(type = type, date = date, tempC = null, label = null, precipPct = null)
+                    PeriodSlot(type = type, date = date, tempC = null, label = null, precipPct = null, windSpeed = null)
                 }
             }
 

@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,72 +29,35 @@ import com.meteo.app.domain.WeatherData
 
 @Composable
 internal fun OverviewPanel(data: WeatherData) {
-    val today = data.overview.today
-    Card(
+    LazyRow(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.5f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF003366).copy(alpha = 0.5f))
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    stringResource(R.string.forecast_title),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-            Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    data.overview.periodSlots.forEachIndexed { index, slot ->
-                        // Si le créneau actuel est le Soir et le suivant est le Matin, 
-                        // ou si la date change entre deux créneaux, on affiche un séparateur de nuit.
-                        if (index > 0) {
-                            val prev = data.overview.periodSlots[index - 1]
-                            if (prev.date != slot.date) {
-                                NightSeparator()
-                            }
-                        }
+        itemsIndexed(data.overview.periodSlots) { index, slot ->
+            val hasDayBreak = index > 0 && data.overview.periodSlots[index - 1].date != slot.date
 
-                        PeriodCell(
-                            title = slot.displayTitle,
-                            tempC = slot.tempC,
-                            label = slot.label,
-                            precipPct = slot.precipPct
-                        )
-                    }
-                }
-                Spacer(Modifier.height(10.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    today.label.let { WeatherIcon(it, Modifier.size(24.dp)) }
-                    Text(
-                        stringResource(
-                            R.string.today_summary,
-                            stringResource(R.string.today),
-                            today.minC,
-                            today.maxC,
-                            "", // On vide l'emoji car on utilise l'icone
-                            today.label,
-                        ),
-                        color = MaterialTheme.colorScheme.secondary,
-                        style = MaterialTheme.typography.labelLarge,
+            if (hasDayBreak) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    NightSeparator()
+                    // Même valeur que l'espacement du LazyRow pour centrer le séparateur.
+                    Spacer(modifier = Modifier.width(10.dp))
+                    PeriodCell(
+                        title = slot.displayTitle,
+                        tempC = slot.tempC,
+                        label = slot.label,
+                        precipPct = slot.precipPct,
+                        windSpeed = slot.windSpeed
                     )
                 }
+            } else {
+                PeriodCell(
+                    title = slot.displayTitle,
+                    tempC = slot.tempC,
+                    label = slot.label,
+                    precipPct = slot.precipPct,
+                    windSpeed = slot.windSpeed
+                )
             }
         }
     }
@@ -104,28 +69,46 @@ private fun PeriodCell(
     tempC: Int?,
     label: String?,
     precipPct: Int?,
+    windSpeed: Int?,
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    Card(
+        modifier = Modifier.width(80.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.5f),
+        ),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
-        Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
-        if (label != null) {
-            WeatherIcon(label)
-        } else {
-            Text("?", style = MaterialTheme.typography.titleLarge)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+            if (label != null) {
+                WeatherIcon(label, modifier = Modifier.size(32.dp))
+            } else {
+                Text("?", style = MaterialTheme.typography.titleLarge)
+            }
+            Text(
+                if (tempC != null) "${tempC}°" else "?°",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                if (precipPct != null) stringResource(R.string.precipitation_pct, precipPct) else "💧 ?",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+            Text(
+                if (windSpeed != null) "💨 $windSpeed" else "💨 ?",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
         }
-        Text(
-            if (tempC != null) "${tempC}°" else "?°",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            if (precipPct != null) stringResource(R.string.precipitation_pct, precipPct) else "💧 ?",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.secondary,
-        )
     }
 }
 

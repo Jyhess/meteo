@@ -97,6 +97,7 @@ data class PeriodSlot(
     val tempC: Int?,
     val label: String?,
     val precipPct: Int?,
+    val windSpeed: Int?,
 ) {
     val displayTitle: String
         get() = type.label

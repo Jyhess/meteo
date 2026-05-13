@@ -41,7 +41,7 @@ internal fun SectionCard(
                     color = MaterialTheme.colorScheme.onPrimary,
                 )
             }
-            Column(Modifier.padding(14.dp)) {
+            Column(Modifier.padding(horizontal = 0.dp, vertical = 10.dp)) {
                 content()
             }
         }
