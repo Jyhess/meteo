@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,13 +27,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -49,6 +48,12 @@ fun WeatherRoute(
     onRefresh: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
+    var currentScreen by remember { mutableStateOf("weather") }
+
+    if (currentScreen == "options") {
+        OptionsScreen(onBack = { currentScreen = "weather" })
+        return
+    }
 
     val backgrounds = remember {
         WeatherCondition.entries.map { it.bgRes }.distinct()
@@ -88,6 +93,7 @@ fun WeatherRoute(
                         locationTitle = locationTitle,
                         viewModel = viewModel,
                         onRefresh = onRefresh,
+                        onSettingsClick = { currentScreen = "options" },
                         onCurrentLocationRequest = onRequestLocation
                     )
                     if (state is WeatherUiState.Success && (state as WeatherUiState.Success).isOffline) {
@@ -134,46 +140,10 @@ fun WeatherRoute(
                                 .padding(padding),
                             data = s.data,
                         )
-                        VersionDisplay()
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun VersionDisplay() {
-    val context = LocalContext.current
-    val packageInfo = remember {
-        try {
-            context.packageManager.getPackageInfo(context.packageName, 0)
-        } catch (e: Exception) {
-            null
-        }
-    }
-    val versionName = packageInfo?.versionName ?: "0.1"
-    val versionCode = packageInfo?.let {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-            it.longVersionCode
-        } else {
-            @Suppress("DEPRECATION")
-            it.versionCode.toLong()
-        }
-    } ?: 1
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(bottom = 12.dp),
-        contentAlignment = Alignment.CenterEnd
-    ) {
-        Text(
-            text = "Version $versionName-$versionCode    ",
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.5f)
-        )
     }
 }
 
@@ -213,7 +183,9 @@ private fun WeatherContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
-            OverviewPanel(data)
+            SectionCard(title = stringResource(R.string.forecast_title)) {
+                OverviewPanel(data)
+            }
         }
         item {
             SectionCard(title = stringResource(R.string.section_next_hours)) {
