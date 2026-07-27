@@ -68,7 +68,7 @@ object OpenMeteoMapper {
             runCatching { parseLocalDateTime(t) }.getOrNull()?.let { it >= slotStart } == true
         }.takeIf { it >= 0 } ?: 0
 
-        val hourly12 = (startIndex until minOf(startIndex + 12, hourlyTimes.size)).map { i ->
+        val hourly24 = (startIndex until minOf(startIndex + 24, hourlyTimes.size)).map { i ->
             val t = hourlyTimes[i]
             val timeLabel = runCatching {
                 parseLocalDateTime(t).format(hourMinuteFormatter)
@@ -193,7 +193,7 @@ object OpenMeteoMapper {
                 tomorrowSlots = tomorrowSlots,
                 periodSlots = periodSlots,
             ),
-            hourly12 = hourly12,
+            hourly = hourly24,
             daily5 = daily5,
         )
     }

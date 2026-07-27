@@ -7,7 +7,7 @@
     <string name="error_network">Impossible de charger la météo. Vérifiez la connexion.</string>
     <string name="location_denied">Permission refusée : affichage de Paris par défaut.</string>
     <string name="summary_title">Aujourd’hui et demain</string>
-    <string name="hourly_title">12 prochaines heures</string>
+    <string name="hourly_title">24 prochaines heures</string>
     <string name="daily_title">5 prochains jours</string>
     <string name="today">Aujourd’hui</string>
     <string name="tomorrow">Demain</string>
@@ -41,7 +41,7 @@
     <string name="debug_section_title">Debug</string>
     <string name="debug_hourly_chart_entry">Graphique horaire</string>
     <string name="debug_hourly_chart_title">Debug — Graphique horaire</string>
-    <string name="debug_hourly_chart_description">Prévisualisez le graphique des 12 prochaines heures avec différents jeux de données.</string>
+    <string name="debug_hourly_chart_description">Prévisualisez le graphique des 24 prochaines heures avec différents jeux de données.</string>
     <string name="debug_scenario_typical">Typique</string>
     <string name="debug_scenario_rainy">Pluie</string>
     <string name="debug_scenario_windy">Vent</string>

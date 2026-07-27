@@ -1,12 +1,14 @@
 package com.meteo.app.domain
 
+import com.google.gson.annotations.SerializedName
 import java.time.LocalDate
 import com.meteo.app.R
 
 data class WeatherData(
     val locationLabel: String,
     val overview: WeatherOverview,
-    val hourly12: List<HourRow>,
+    @SerializedName(value = "hourly", alternate = ["hourly12"])
+    val hourly: List<HourRow> = emptyList(),
     val daily5: List<DayForecast>,
 )
 

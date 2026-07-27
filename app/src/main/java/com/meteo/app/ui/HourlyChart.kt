@@ -45,33 +45,78 @@ private const val PrecipExponent = 0.6f
 
 @Composable
 internal fun HourlyChart(hours: List<HourRow>) {
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val slotCount = hours.size
+    // On récupère les valeurs pour l'échelle fixe
+    val temps = remember(hours) { hours.map { it.tempC.toFloat() } }
+    val vMin = temps.minOrNull() ?: 0f
+    val vMax = temps.maxOrNull() ?: vMin
+    val scaleMin = vMin - 5f
+    val scaleMax = vMax + 5f
+    val range = max(scaleMax - scaleMin, 1f)
 
-        val availableWidth = maxWidth
-        val slotWidthDp = availableWidth / slotCount
-        val labelStep = remember(availableWidth, slotCount) {
-            when {
-                slotWidthDp >= 36.dp -> 1
-                slotWidthDp >= 24.dp -> 2
-                slotWidthDp >= 18.dp -> 3
-                else -> 4
-            }
-        }
+    val windMaxLimit = 100f
+    val windExponent = 0.5f
+    val maxPower = windMaxLimit.pow(windExponent)
 
-        Column(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        val fullMaxHeight = 112.dp // Hauteur fixée du canvas
+        val chartHeightDp = fullMaxHeight * ChartHeightFraction
+        val chartBottomDp = fullMaxHeight * ChartBottomFraction
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             HourlyCurvesCanvas(
                 hours = hours,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(112.dp)
+                    .height(fullMaxHeight)
                     .padding(top = 4.dp),
             )
             HourlyTimeLabels(
                 hours = hours,
-                labelStep = labelStep,
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+
+        // Échelles fixes au-dessus du graphique
+        // Temperature Scale (Left)
+        listOf(vMax, (vMin + vMax) / 2f, vMin).forEach { valDeg ->
+            val normalized = ((valDeg - scaleMin) / range).coerceIn(0f, 1f)
+            val yOffset = chartBottomDp - (chartHeightDp * normalized)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(x = 6.dp, y = yOffset - 11.dp + 4.dp) // +4dp pour le padding top du canvas
+                    .height(22.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Text(
+                    text = "${valDeg.toInt()}°",
+                    color = TempCurveColor.copy(alpha = 0.95f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+
+        // Wind Scale (Right)
+        listOf(10f, 30f, 60f, 100f).forEach { windVal ->
+            val normalized = (windVal.pow(windExponent) / maxPower).coerceIn(0f, 1f)
+            val yOffset = chartBottomDp - (chartHeightDp * normalized)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-6).dp, y = yOffset - 11.dp + 4.dp)
+                    .height(22.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Text(
+                    text = windVal.toInt().toString(),
+                    color = WindCurveColor.copy(alpha = 0.9f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
     }
 }
@@ -79,13 +124,13 @@ internal fun HourlyChart(hours: List<HourRow>) {
 @Composable
 private fun HourlyTimeLabels(
     hours: List<HourRow>,
-    labelStep: Int,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier) {
         hours.forEachIndexed { index, hour ->
-            val showLabel = (index == 0) || (index == hours.lastIndex) || (index % labelStep == 0)
-            BoxWithConstraints(
+            // On affiche les labels toutes les 4 heures pour éviter les chevauchements sur petit écran
+            val showLabel = (index % 4 == 0) || (index == hours.lastIndex)
+            Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.TopCenter,
             ) {
@@ -119,7 +164,6 @@ private fun HourlyCurvesCanvas(
 
     val vMin = temps.minOrNull() ?: 0f
     val vMax = temps.maxOrNull() ?: vMin
-    val vMid = (vMin + vMax) / 2f
 
     val scaleMin = vMin - 5f
     val scaleMax = vMax + 5f
@@ -137,10 +181,6 @@ private fun HourlyCurvesCanvas(
     }
 
     BoxWithConstraints(modifier = modifier) {
-        val fullMaxHeight = maxHeight
-        val chartHeightDp = fullMaxHeight * ChartHeightFraction
-        val chartBottomDp = fullMaxHeight * ChartBottomFraction
-
         Canvas(
             modifier = Modifier.fillMaxSize(),
         ) {
@@ -151,7 +191,7 @@ private fun HourlyCurvesCanvas(
             val chartHeight = chartBottom - chartTop
             val slotWidth = size.width / hours.size
 
-            fun xAt(index: Int): Float = slotWidth * index + slotWidth / 2f
+            fun xAt(index: Int): Float = (slotWidth * index) + (slotWidth / 2f)
             fun yAt(normalized: Float): Float = chartBottom - normalized * chartHeight
 
             fun buildPoints(values: List<Float>): List<Offset> =
@@ -181,46 +221,6 @@ private fun HourlyCurvesCanvas(
             drawSeries(tempPoints, TempCurveColor, strokeWidth)
             drawSeries(windPoints, WindCurveColor, strokeWidth)
         }
-
-        // Temperature Scale (Left) - Overlaid
-        listOf(vMax, vMid, vMin).forEach { valDeg ->
-            val normalized = ((valDeg - scaleMin) / range).coerceIn(0f, 1f)
-            val yOffset = chartBottomDp - (chartHeightDp * normalized)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(x = 6.dp, y = yOffset - 10.dp)
-                    .height(20.dp),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                Text(
-                    text = "${valDeg.toInt()}°",
-                    color = TempCurveColor.copy(alpha = 0.9f),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-
-        // Wind Scale (Right) - Overlaid - Skip 0
-        listOf(10f, 30f, 60f, 100f).forEach { windVal ->
-            val normalized = (windVal.pow(windExponent) / maxPower).coerceIn(0f, 1f)
-            val yOffset = chartBottomDp - (chartHeightDp * normalized)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-6).dp, y = yOffset - 10.dp)
-                    .height(20.dp),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Text(
-                    text = windVal.toInt().toString(),
-                    color = WindCurveColor.copy(alpha = 0.8f),
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
     }
 }
 
@@ -248,7 +248,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPrecipBars(
 
         drawRect(
             color = PrecipBarColor,
-            topLeft = Offset(centerX - barWidth / 2f, chartBottom - barHeight),
+            topLeft = Offset(centerX - (barWidth / 2f), chartBottom - barHeight),
             size = Size(barWidth, barHeight),
         )
     }

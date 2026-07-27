@@ -9,8 +9,8 @@ import com.meteo.app.R
 import com.meteo.app.domain.HourRow
 
 @Composable
-internal fun HourlyPanel(hours: List<HourRow>) {
-    if (hours.isEmpty()) {
+internal fun HourlyPanel(hours: List<HourRow>?) {
+    if (hours.isNullOrEmpty()) {
         Text(stringResource(R.string.no_hourly_data), style = MaterialTheme.typography.bodyMedium)
         return
     }

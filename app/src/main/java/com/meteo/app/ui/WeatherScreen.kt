@@ -73,7 +73,7 @@ fun WeatherRoute(
     LaunchedEffect(state) {
         val s = state
         if (s is WeatherUiState.Success) {
-            val currentHourLabel = s.data.hourly12.firstOrNull()?.label
+            val currentHourLabel = s.data.hourly?.firstOrNull()?.label
             val condition = WeatherCondition.entries.find {
                 it.description == (currentHourLabel ?: s.data.overview.today.label)
             }
@@ -230,7 +230,7 @@ private fun WeatherContent(
         }
         item {
             SectionCard(title = stringResource(R.string.section_next_hours)) {
-                HourlyPanel(data.hourly12)
+                HourlyPanel(data.hourly)
             }
         }
         item {

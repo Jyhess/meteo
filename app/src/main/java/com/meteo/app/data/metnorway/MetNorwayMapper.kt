@@ -47,10 +47,10 @@ object MetNorwayMapper {
         val currentSlot = series.find { LocalDateTime.parse(it.time.take(19)) >= now.withMinute(0) }
             ?: series.first()
 
-        val hourly12 = series.filter {
+        val hourly = series.filter {
             val t = LocalDateTime.parse(it.time.take(19))
             t >= now.withMinute(0)
-        }.take(12).map {
+        }.take(24).map {
             val t = LocalDateTime.parse(it.time.take(19))
             HourRow(
                 timeLabel = t.format(hourMinuteFormatter),
@@ -139,7 +139,7 @@ object MetNorwayMapper {
                 tomorrowSlots = emptyList(),
                 periodSlots = periodSlots
             ), // Simplified
-            hourly12 = hourly12,
+            hourly = hourly,
             daily5 = daily5
         )
     }

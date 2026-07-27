@@ -40,55 +40,55 @@ private enum class HourlyChartScenario(
     Typical(
         labelRes = R.string.debug_scenario_typical,
         hours = sampleHours(
-            temps = listOf(12, 13, 15, 17, 18, 19, 18, 16, 14, 13, 12, 11),
-            precips = listOf(5, 10, 15, 20, 25, 30, 35, 40, 30, 20, 10, 5),
-            winds = listOf(8, 10, 12, 14, 16, 18, 20, 18, 15, 12, 10, 8),
-            labels = List(12) { "Nuageux" },
+            temps = listOf(12, 13, 15, 17, 18, 19, 18, 16, 14, 13, 12, 11, 10, 9, 9, 10, 11, 13, 15, 17, 18, 17, 15, 13),
+            precips = listOf(5, 10, 15, 20, 25, 30, 35, 40, 30, 20, 10, 5, 0, 0, 5, 10, 15, 20, 25, 30, 25, 20, 15, 10),
+            winds = listOf(8, 10, 12, 14, 16, 18, 20, 18, 15, 12, 10, 8, 7, 6, 6, 7, 8, 10, 12, 14, 13, 12, 10, 9),
+            labels = List(24) { "Nuageux" },
         ),
     ),
     Rainy(
         labelRes = R.string.debug_scenario_rainy,
         hours = sampleHours(
-            temps = listOf(11, 11, 10, 10, 9, 9, 9, 10, 10, 11, 11, 12),
-            precips = listOf(40, 55, 70, 85, 90, 95, 90, 80, 65, 50, 35, 25),
-            winds = listOf(12, 14, 16, 18, 20, 22, 24, 22, 20, 18, 16, 14),
-            labels = List(12) { "Pluie" },
+            temps = listOf(11, 11, 10, 10, 9, 9, 9, 10, 10, 11, 11, 12, 12, 12, 11, 11, 10, 10, 9, 9, 10, 10, 11, 11),
+            precips = listOf(40, 55, 70, 85, 90, 95, 90, 80, 65, 50, 35, 25, 20, 15, 30, 45, 60, 75, 80, 70, 60, 50, 40, 30),
+            winds = listOf(12, 14, 16, 18, 20, 22, 24, 22, 20, 18, 16, 14, 13, 12, 14, 16, 18, 20, 21, 20, 18, 16, 14, 13),
+            labels = List(24) { "Pluie" },
         ),
     ),
     Windy(
         labelRes = R.string.debug_scenario_windy,
         hours = sampleHours(
-            temps = listOf(14, 14, 15, 15, 16, 16, 15, 15, 14, 14, 13, 13),
-            precips = listOf(0, 5, 10, 5, 0, 0, 5, 10, 5, 0, 0, 0),
-            winds = listOf(15, 22, 30, 38, 45, 50, 48, 40, 32, 25, 18, 12),
-            labels = List(12) { "Vent" },
+            temps = listOf(14, 14, 15, 15, 16, 16, 15, 15, 14, 14, 13, 13, 12, 12, 13, 13, 14, 15, 16, 16, 15, 14, 13, 12),
+            precips = listOf(0, 5, 10, 5, 0, 0, 5, 10, 5, 0, 0, 0, 0, 5, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0),
+            winds = listOf(15, 22, 30, 38, 45, 50, 48, 40, 32, 25, 18, 12, 15, 25, 40, 60, 80, 95, 85, 70, 55, 40, 25, 15),
+            labels = List(24) { "Vent" },
         ),
     ),
     Stable(
         labelRes = R.string.debug_scenario_stable,
         hours = sampleHours(
-            temps = List(12) { 16 },
-            precips = List(12) { 10 },
-            winds = List(12) { 12 },
-            labels = List(12) { "Dégagé" },
+            temps = List(24) { 16 },
+            precips = List(24) { 10 },
+            winds = List(24) { 12 },
+            labels = List(24) { "Dégagé" },
         ),
     ),
     Extreme(
         labelRes = R.string.debug_scenario_extreme,
         hours = sampleHours(
-            temps = listOf(2, 8, 14, 22, 26, 28, 27, 24, 18, 12, 6, 0),
-            precips = listOf(0, 0, 10, 40, 80, 100, 90, 60, 30, 10, 0, 0),
-            winds = listOf(5, 8, 12, 20, 35, 55, 45, 30, 18, 10, 6, 4),
-            labels = List(12) { "Variable" },
+            temps = listOf(2, 8, 14, 22, 26, 28, 27, 24, 18, 12, 6, 0, -2, -5, -3, 0, 4, 10, 16, 20, 18, 14, 10, 5),
+            precips = listOf(0, 0, 10, 40, 80, 100, 90, 60, 30, 10, 0, 0, 5, 10, 20, 40, 70, 90, 80, 60, 40, 20, 10, 5),
+            winds = listOf(5, 8, 12, 20, 35, 55, 45, 30, 18, 10, 6, 4, 10, 25, 50, 80, 100, 90, 70, 50, 30, 15, 8, 5),
+            labels = List(24) { "Variable" },
         ),
     ),
     SparsePrecip(
         labelRes = R.string.debug_scenario_sparse_precip,
         hours = sampleHours(
-            temps = listOf(10, 11, 12, 13, 14, 15, 16, 15, 14, 13, 12, 11),
-            precips = listOf(-1, -1, 5, -1, -1, 20, -1, -1, 40, -1, -1, 10),
-            winds = listOf(6, 7, 8, 9, 10, 11, 12, 11, 10, 9, 8, 7),
-            labels = List(12) { "Nuageux" },
+            temps = listOf(10, 11, 12, 13, 14, 15, 16, 15, 14, 13, 12, 11, 10, 11, 12, 13, 14, 15, 16, 15, 14, 13, 12, 11),
+            precips = listOf(-1, -1, 5, -1, -1, 20, -1, -1, 40, -1, -1, 10, -1, -1, 5, -1, -1, 20, -1, -1, 40, -1, -1, 10),
+            winds = listOf(6, 7, 8, 9, 10, 11, 12, 11, 10, 9, 8, 7, 6, 7, 8, 9, 10, 11, 12, 11, 10, 9, 8, 7),
+            labels = List(24) { "Nuageux" },
         ),
     ),
 }
@@ -166,7 +166,7 @@ private fun sampleHours(
     labels: List<String>,
     startHour: Int = 8,
 ): List<HourRow> {
-    val count = minOf(temps.size, precips.size, winds.size, labels.size, 12)
+    val count = minOf(temps.size, precips.size, winds.size, labels.size, 24)
     return (0 until count).map { index ->
         val hour = (startHour + index) % 24
         HourRow(
