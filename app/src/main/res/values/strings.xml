@@ -35,4 +35,17 @@
     <string name="saved_locations">Emplacements sauvegardés</string>
     <string name="add_current_location">Ajouter ma position</string>
     <string name="search_results">Résultats de recherche</string>
+    <string name="back">Retour</string>
+    <string name="options_title">Options</string>
+    <string name="options_subtitle">Paramètres de l\'application</string>
+    <string name="debug_section_title">Debug</string>
+    <string name="debug_hourly_chart_entry">Graphique horaire</string>
+    <string name="debug_hourly_chart_title">Debug — Graphique horaire</string>
+    <string name="debug_hourly_chart_description">Prévisualisez le graphique des 12 prochaines heures avec différents jeux de données.</string>
+    <string name="debug_scenario_typical">Typique</string>
+    <string name="debug_scenario_rainy">Pluie</string>
+    <string name="debug_scenario_windy">Vent</string>
+    <string name="debug_scenario_stable">Stable</string>
+    <string name="debug_scenario_extreme">Extrêmes</string>
+    <string name="debug_scenario_sparse_precip">Précip. partielles</string>
 </resources>

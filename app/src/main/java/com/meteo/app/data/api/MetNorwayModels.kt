@@ -3,7 +3,7 @@ package com.meteo.app.data.api
 import com.google.gson.annotations.SerializedName
 
 data class MetNorwayResponse(
-    val properties: MetProperties
+    val properties: MetProperties,
 )
 
 data class MetProperties(
@@ -39,6 +39,7 @@ data class MetDetails(
     @SerializedName("air_temperature") val airTemperature: Double?,
     @SerializedName("wind_speed") val windSpeed: Double?,
     @SerializedName("probability_of_precipitation") val precipitationProbability: Double?,
+    @SerializedName("precipitation_amount") val precipitationAmount: Double?,
     @SerializedName("air_temperature_max") val airTemperatureMax: Double?,
     @SerializedName("air_temperature_min") val airTemperatureMin: Double?
 )

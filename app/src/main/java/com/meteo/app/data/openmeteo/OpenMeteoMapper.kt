@@ -52,7 +52,8 @@ object OpenMeteoMapper {
         val hourlyTimes = hourly?.time.orEmpty()
         val hourlyTemps = hourly?.temperature.orEmpty()
         val hourlyCodes = hourly?.weatherCode.orEmpty()
-        val hourlyPrecip = hourly?.precipitationProbability.orEmpty()
+        val hourlyPrecipProb = hourly?.precipitationProbability.orEmpty()
+        val hourlyPrecipAmount = hourly?.precipitation.orEmpty()
         val hourlyWind = hourly?.windSpeed.orEmpty()
 
         val dailyDates = daily?.time.orEmpty()
@@ -75,7 +76,8 @@ object OpenMeteoMapper {
             HourRow(
                 timeLabel = timeLabel,
                 tempC = hourlyTemps.getOrNull(i)?.roundToInt() ?: 0,
-                precipPct = hourlyPrecip.getOrNull(i),
+                precipPct = hourlyPrecipProb.getOrNull(i),
+                precipAmount = hourlyPrecipAmount.getOrNull(i)?.toFloat(),
                 windSpeed = hourlyWind.getOrNull(i)?.roundToInt() ?: 0,
                 label = WeatherCondition.fromWMOCode(hourlyCodes.getOrNull(i)).description,
             )
@@ -152,11 +154,20 @@ object OpenMeteoMapper {
                         date = date,
                         tempC = hourlyTemps.getOrNull(i)?.roundToInt(),
                         label = WeatherCondition.fromWMOCode(hourlyCodes.getOrNull(i)).description,
-                        precipPct = hourlyPrecip.getOrNull(i),
-                        windSpeed = hourlyWind.getOrNull(i)?.roundToInt()
+                        precipPct = hourlyPrecipProb.getOrNull(i),
+                        precipAmount = hourlyPrecipAmount.getOrNull(i)?.toFloat(),
+                        windSpeed = hourlyWind.getOrNull(i)?.roundToInt(),
                     )
                 } else {
-                    PeriodSlot(type = type, date = date, tempC = null, label = null, precipPct = null, windSpeed = null)
+                    PeriodSlot(
+                        type = type,
+                        date = date,
+                        tempC = null,
+                        label = null,
+                        precipPct = null,
+                        precipAmount = null,
+                        windSpeed = null
+                    )
                 }
             }
 

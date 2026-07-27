@@ -97,6 +97,7 @@ data class PeriodSlot(
     val tempC: Int?,
     val label: String?,
     val precipPct: Int?,
+    val precipAmount: Float?,
     val windSpeed: Int?,
 ) {
     val displayTitle: String
@@ -121,6 +122,7 @@ data class HourRow(
     val timeLabel: String,
     val tempC: Int,
     val precipPct: Int?,
+    val precipAmount: Float?,
     val windSpeed: Int,
     val label: String,
 )

@@ -50,8 +50,16 @@ fun WeatherRoute(
     val state by viewModel.state.collectAsState()
     var currentScreen by remember { mutableStateOf("weather") }
 
+    if (currentScreen == "hourly_chart_debug") {
+        HourlyChartDebugScreen(onBack = { currentScreen = "options" })
+        return
+    }
+
     if (currentScreen == "options") {
-        OptionsScreen(onBack = { currentScreen = "weather" })
+        OptionsScreen(
+            onBack = { currentScreen = "weather" },
+            onOpenHourlyChartDebug = { currentScreen = "hourly_chart_debug" },
+        )
         return
     }
 

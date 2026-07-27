@@ -31,7 +31,7 @@ object MetNorwayMapper {
         "lightsnow" to WeatherCondition.SLIGHT_SNOWFALL,
         "snow" to WeatherCondition.MODERATE_SNOWFALL,
         "heavysnow" to WeatherCondition.HEAVY_SNOWFALL,
-        "thunderstorm" to WeatherCondition.THUNDERSTORM
+        "thunderstorm" to WeatherCondition.THUNDERSTORM,
     )
 
     private fun String.toDescription(): String {
@@ -56,6 +56,7 @@ object MetNorwayMapper {
                 timeLabel = t.format(hourMinuteFormatter),
                 tempC = it.data.instant.details.airTemperature?.toInt() ?: 0,
                 precipPct = it.data.next1h?.details?.precipitationProbability?.toInt(),
+                precipAmount = it.data.next1h?.details?.precipitationAmount?.toFloat(),
                 windSpeed = it.data.instant.details.windSpeed?.toInt() ?: 0,
                 label = it.data.next1h?.summary?.symbolCode?.toDescription() ?: WeatherCondition.UNKNOWN.description
             )
@@ -115,10 +116,19 @@ object MetNorwayMapper {
                         tempC = best.data.instant.details.airTemperature?.toInt(),
                         label = (best.data.next1h ?: best.data.next6h)?.summary?.symbolCode?.toDescription(),
                         precipPct = (best.data.next1h ?: best.data.next6h)?.details?.precipitationProbability?.toInt(),
+                        precipAmount = (best.data.next1h ?: best.data.next6h)?.details?.precipitationAmount?.toFloat(),
                         windSpeed = best.data.instant.details.windSpeed?.toInt()
                     )
                 } else {
-                    PeriodSlot(type = type, date = date, tempC = null, label = null, precipPct = null, windSpeed = null)
+                    PeriodSlot(
+                        type = type,
+                        date = date,
+                        tempC = null,
+                        label = null,
+                        precipPct = null,
+                        precipAmount = null,
+                        windSpeed = null
+                    )
                 }
             }
 

@@ -19,6 +19,7 @@ data class HourlyDto(
     @SerializedName("temperature_2m") val temperature: List<Double>?,
     @SerializedName("weather_code") val weatherCode: List<Int>?,
     @SerializedName("precipitation_probability") val precipitationProbability: List<Int>?,
+    @SerializedName("precipitation") val precipitation: List<Double>?,
     @SerializedName("wind_speed_10m") val windSpeed: List<Double>?,
 )
 

@@ -12,7 +12,7 @@ class OpenMeteoProvider(private val api: OpenMeteoService) : WeatherProvider {
             latitude = latitude,
             longitude = longitude,
             current = "temperature_2m,weather_code",
-            hourly = "temperature_2m,weather_code,precipitation_probability,wind_speed_10m",
+            hourly = "temperature_2m,weather_code,precipitation_probability,precipitation,wind_speed_10m",
             daily = "weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max",
             forecastDays = 16,
             timezone = "auto",
