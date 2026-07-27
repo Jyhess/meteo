@@ -26,7 +26,7 @@ class WeatherSpec:
 
 
 WEATHER_SPECS: tuple[WeatherSpec, ...] = (
-    WeatherSpec("CLEAR", "Clear sky", "bright open blue sky, clean sunlight, airy atmosphere, soft sun glow"),
+    WeatherSpec("CLEAR", "Clear sky", "Blue sky, no clouds, clean sunlight, airy atmosphere, soft sun glow"),
     WeatherSpec("MOSTLY_CLEAR", "Mostly clear", "mostly clear sky with a few soft clouds, bright daylight, gentle warmth"),
     WeatherSpec("PARTLY_CLOUDY", "Partly cloudy", "partly cloudy sky, balanced sun and clouds, soft contrast, calm daylight"),
     WeatherSpec("OVERCAST", "Overcast", "dense overcast sky, thick cloud blanket, muted light, quiet and cinematic mood"),
