@@ -17,11 +17,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.meteo.app.R
@@ -193,11 +195,26 @@ private fun DayDetailContent(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        // Image de fond plus visible
         Image(
             painter = painterResource(id = condition.bgRes),
             contentDescription = null,
             modifier = Modifier.matchParentSize(),
             contentScale = ContentScale.Crop,
+        )
+
+        // Overlay sombre pour faire ressortir le texte blanc/clair
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.Black.copy(alpha = 0.3f),
+                            Color.Black.copy(alpha = 0.5f),
+                        ),
+                    ),
+                ),
         )
 
         Column(
@@ -228,26 +245,31 @@ private fun DayDetailContent(
                 )
             }
 
-            // Carte Résumé sans fond translucide
+            // Carte Résumé translucide
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = Color.Transparent,
+                color = Color.White.copy(alpha = 0.15f),
                 shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                         WeatherIcon(day.label, modifier = Modifier.size(64.dp))
                         Text(
                             text = day.label,
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.White.copy(alpha = 0.8f),
+                            textAlign = TextAlign.Center,
+                            softWrap = true,
                         )
                     }
 
@@ -272,8 +294,12 @@ private fun DayDetailContent(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             DetailBadge(icon = "💨", value = "${day.windSpeed} km/h")
-                            day.precipPct?.let {
-                                DetailBadge(icon = "💧", value = "$it%")
+                            if (day.precipPct != null || (day.precipAmount ?: 0f) > 0f) {
+                                val pct = day.precipPct?.let { "$it%" } ?: ""
+                                val amount = day.precipAmount?.let { 
+                                    if (it > 0) " (${String.format(java.util.Locale.getDefault(), "%.1f", it)} mm)" else "" 
+                                } ?: ""
+                                DetailBadge(icon = "💧", value = "$pct$amount")
                             }
                         }
                     }
@@ -292,9 +318,9 @@ private fun DayDetailContent(
 
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color.Transparent,
+                    color = Color.White.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(24.dp),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
                 ) {
                     Box(modifier = Modifier.padding(vertical = 12.dp)) {
                         when (dayHourlyState) {

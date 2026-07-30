@@ -138,5 +138,6 @@ data class DayForecast(
     val maxC: Int,
     val windSpeed: Int,
     val precipPct: Int? = null,
+    val precipAmount: Float? = null,
     val label: String,
 )

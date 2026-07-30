@@ -33,8 +33,8 @@ import kotlin.math.pow
 
 private val TempCurveColor = Color(0xFFFFD54F)
 private val TempFillColor = Color(0xFFFFD54F).copy(alpha = 0.22f)
-private val PrecipColor = Color(0xFF00B0FF)
-private val PrecipBarColor = PrecipColor.copy(alpha = 0.65f)
+private val PrecipColor = Color(0xFF0D47A1)
+private val PrecipBarColor = PrecipColor.copy(alpha = 0.75f)
 private val WindCurveColor = Color.White
 
 private const val ChartTopFraction = 0.05f
@@ -243,7 +243,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPrecipBars(
 
         val precipFraction = (precip / 100f).coerceIn(0f, 1f)
         val scaledFraction = precipFraction.pow(PrecipExponent)
-        val barHeight = scaledFraction * chartHeight
+        // Ajout d'une hauteur minimale de 5 pixels pour rendre les barres visibles dès que precip > 0
+        val barHeight = (scaledFraction * chartHeight).coerceAtLeast(5f)
         val centerX = chartLeft + (slotWidth * index) + (slotWidth / 2f)
 
         drawRect(
