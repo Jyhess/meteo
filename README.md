@@ -24,21 +24,15 @@ Meteo is a simple and fast Android weather app, with no ads or trackers.
 
 ## 📦 Build APK
 
-Build a release APK:
+### Build new version and copy to output directory.
 
 ```bash
-./gradlew :app:assembleRelease
+./gradlew :newRelease
+./gradlew :newDebug
 ```
 
-APK path:
-
-- `app/build/outputs/apk/release/app-release.apk`
-
-Optional install with ADB:
-
-```bash
-adb install -r app/build/outputs/apk/release/app-release.apk
-```
+Output directory is defined by `APK_OUTPUT_RELEASE` and `APK_OUTPUT_DEBUG`,
+with default directory `app/build/outputs/apk/release/` and `app/build/outputs/apk/debug/`.
 
 ## 🎨 Generate Weather Backgrounds
 

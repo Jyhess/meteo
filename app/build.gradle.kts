@@ -38,9 +38,8 @@ fun updatePropertyInFile(file: File, key: String, newValue: String) {
 // Versions lues au moment de la configuration
 // ---------------------------------------------------------------------------
 
-val versionCodeRelease = resolveProperty("VERSION_CODE_RELEASE", "1").toInt()
-val versionCodeDebug   = resolveProperty("VERSION_CODE_DEBUG",   "1").toInt()
-val versionNameProp    = resolveProperty("VERSION_NAME", "1.0")
+val versionCodeProp = resolveProperty("VERSION_CODE", "1").toInt()
+val versionNameProp = resolveProperty("VERSION_NAME", "1.0")
 
 android {
     namespace = "com.meteo.app"
@@ -50,7 +49,7 @@ android {
         applicationId = "com.meteo.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = versionCodeRelease   // valeur par défaut (overridée par variant)
+        versionCode = versionCodeProp
         versionName = versionNameProp
     }
 
@@ -75,21 +74,8 @@ android {
 }
 
 // ---------------------------------------------------------------------------
-// Version code par variant (release / debug indépendants)
+// Version code commun (release / debug)
 // ---------------------------------------------------------------------------
-
-androidComponents {
-    onVariants { variant ->
-        variant.outputs.forEach { output ->
-            output.versionCode.set(
-                when (variant.buildType) {
-                    "release" -> versionCodeRelease
-                    else      -> versionCodeDebug
-                }
-            )
-        }
-    }
-}
 
 kotlin {
     compilerOptions {
@@ -114,17 +100,17 @@ tasks.configureEach {
 
 tasks.register("newRelease") {
     group = "meteo"
-    description = "Incrémente VERSION_CODE_RELEASE, assemble le build release et copie l'APK."
+    description = "Incrémente VERSION_CODE, assemble le build release et copie l'APK."
     dependsOn("assembleRelease")
     doFirst {
         val propsFile = rootProject.file("gradle.properties")
-        val currentCode = resolveProperty("VERSION_CODE_RELEASE", "1").toInt()
+        val currentCode = resolveProperty("VERSION_CODE", "1").toInt()
         val newCode = currentCode + 1
-        updatePropertyInFile(propsFile, "VERSION_CODE_RELEASE", newCode.toString())
-        println("VERSION_CODE_RELEASE : $currentCode → $newCode")
+        updatePropertyInFile(propsFile, "VERSION_CODE", newCode.toString())
+        println("VERSION_CODE : $currentCode → $newCode")
     }
     doLast {
-        val newCode = resolveProperty("VERSION_CODE_RELEASE", "1").toInt()
+        val newCode = resolveProperty("VERSION_CODE", "1").toInt()
         val versionName = resolveProperty("VERSION_NAME", "1.0")
         val outputDir   = resolveProperty("APK_OUTPUT_RELEASE", "app/build/outputs/apk/release/")
         val sourceApk   = project.layout.buildDirectory
@@ -139,17 +125,17 @@ tasks.register("newRelease") {
 
 tasks.register("newDebug") {
     group = "meteo"
-    description = "Incrémente VERSION_CODE_DEBUG, assemble le build debug et copie l'APK."
+    description = "Incrémente VERSION_CODE, assemble le build debug et copie l'APK."
     dependsOn("assembleDebug")
     doFirst {
         val propsFile = rootProject.file("gradle.properties")
-        val currentCode = resolveProperty("VERSION_CODE_DEBUG", "1").toInt()
+        val currentCode = resolveProperty("VERSION_CODE", "1").toInt()
         val newCode = currentCode + 1
-        updatePropertyInFile(propsFile, "VERSION_CODE_DEBUG", newCode.toString())
-        println("VERSION_CODE_DEBUG : $currentCode → $newCode")
+        updatePropertyInFile(propsFile, "VERSION_CODE", newCode.toString())
+        println("VERSION_CODE : $currentCode → $newCode")
     }
     doLast {
-        val newCode = resolveProperty("VERSION_CODE_DEBUG", "1").toInt()
+        val newCode = resolveProperty("VERSION_CODE", "1").toInt()
         val versionName = resolveProperty("VERSION_NAME", "1.0")
         val outputDir   = resolveProperty("APK_OUTPUT_DEBUG", "app/build/outputs/apk/debug/")
         val sourceApk   = project.layout.buildDirectory
