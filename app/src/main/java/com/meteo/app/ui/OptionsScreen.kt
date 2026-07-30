@@ -1,10 +1,8 @@
 package com.meteo.app.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,9 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +30,6 @@ import com.meteo.app.R
 @Composable
 fun OptionsScreen(
     onBack: () -> Unit,
-    onOpenHourlyChartDebug: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -65,46 +60,10 @@ fun OptionsScreen(
                     style = MaterialTheme.typography.titleLarge,
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = stringResource(R.string.debug_section_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                )
-                HorizontalDivider()
-                DebugMenuRow(
-                    title = stringResource(R.string.debug_hourly_chart_entry),
-                    onClick = onOpenHourlyChartDebug,
-                )
             }
 
             VersionDisplay()
         }
-    }
-}
-
-@Composable
-private fun DebugMenuRow(
-    title: String,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-        )
     }
 }
 
@@ -114,7 +73,7 @@ private fun VersionDisplay() {
     val packageInfo = remember {
         try {
             context.packageManager.getPackageInfo(context.packageName, 0)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

@@ -4,8 +4,10 @@ import com.meteo.app.data.api.MetNorwayService
 import com.meteo.app.data.api.OpenMeteoService
 import com.meteo.app.data.metnorway.MetNorwayProvider
 import com.meteo.app.data.openmeteo.OpenMeteoProvider
+import com.meteo.app.domain.HourRow
 import com.meteo.app.domain.WeatherData
 import okhttp3.OkHttpClient
+import java.time.LocalDate
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -53,4 +55,16 @@ class WeatherRepository {
     }
 
     suspend fun searchCity(query: String) = openMeteoService.search(query).results.orEmpty()
+
+    suspend fun fetchHourlyForDay(latitude: Double, longitude: Double, date: LocalDate): List<HourRow> {
+        var lastException: Exception? = null
+        for (provider in providers) {
+            try {
+                return provider.fetchHourlyForDay(latitude, longitude, date)
+            } catch (e: Exception) {
+                lastException = e
+            }
+        }
+        throw lastException ?: Exception("Aucun fournisseur disponible")
+    }
 }

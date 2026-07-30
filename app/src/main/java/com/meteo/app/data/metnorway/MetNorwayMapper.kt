@@ -58,7 +58,8 @@ object MetNorwayMapper {
                 precipPct = it.data.next1h?.details?.precipitationProbability?.toInt(),
                 precipAmount = it.data.next1h?.details?.precipitationAmount?.toFloat(),
                 windSpeed = it.data.instant.details.windSpeed?.toInt() ?: 0,
-                label = it.data.next1h?.summary?.symbolCode?.toDescription() ?: WeatherCondition.UNKNOWN.description
+                label = it.data.next1h?.summary?.symbolCode?.toDescription() ?: WeatherCondition.UNKNOWN.description,
+                date = t.toLocalDate()
             )
         }
 
@@ -67,13 +68,16 @@ object MetNorwayMapper {
             val date = LocalDate.parse(dateStr)
             val temps = dayData.mapNotNull { it.data.instant.details.airTemperature }
             val winds = dayData.mapNotNull { it.data.instant.details.windSpeed }
+            val precips = dayData.mapNotNull { (it.data.next1h ?: it.data.next6h)?.details?.precipitationProbability }
             DayForecast(
+                date = date,
                 weekdayLabel = date.dayOfWeek.getDisplayName(TextStyle.SHORT, localeFr)
                     .capitalize(),
                 dayOfMonth = date.dayOfMonth,
                 minC = temps.minOrNull()?.toInt() ?: 0,
                 maxC = temps.maxOrNull()?.toInt() ?: 0,
                 windSpeed = winds.maxOrNull()?.toInt() ?: 0,
+                precipPct = precips.maxOrNull()?.toInt(),
                 label = dayData.firstOrNull { it.data.next6h != null }?.data?.next6h?.summary?.symbolCode?.toDescription() ?: WeatherCondition.VARIABLE.description
             )
         }.take(15)
@@ -140,8 +144,23 @@ object MetNorwayMapper {
                 periodSlots = periodSlots
             ), // Simplified
             hourly = hourly,
-            daily5 = daily5
+            daily5 = daily5,
         )
+    }
+
+    fun mapHourly(response: MetNorwayResponse): List<HourRow> {
+        return response.properties.timeseries.map {
+            val t = LocalDateTime.parse(it.time.take(19))
+            HourRow(
+                timeLabel = t.format(hourMinuteFormatter),
+                tempC = it.data.instant.details.airTemperature?.toInt() ?: 0,
+                precipPct = (it.data.next1h ?: it.data.next6h)?.details?.precipitationProbability?.toInt(),
+                precipAmount = (it.data.next1h ?: it.data.next6h)?.details?.precipitationAmount?.toFloat(),
+                windSpeed = it.data.instant.details.windSpeed?.toInt() ?: 0,
+                label = (it.data.next1h ?: it.data.next6h)?.summary?.symbolCode?.toDescription() ?: WeatherCondition.UNKNOWN.description,
+                date = t.toLocalDate()
+            )
+        }
     }
 
     private fun String.capitalize() = replaceFirstChar { if (it.isLowerCase()) it.titlecase(localeFr) else it.toString() }

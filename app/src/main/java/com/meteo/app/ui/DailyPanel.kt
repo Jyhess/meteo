@@ -20,10 +20,14 @@ import androidx.compose.ui.unit.dp
 import com.meteo.app.domain.DayForecast
 
 @Composable
-internal fun DailyPanel(days: List<DayForecast>) {
+internal fun DailyPanel(
+    days: List<DayForecast>,
+    onDayClick: (DayForecast) -> Unit = {}
+) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(days, key = { "${it.weekdayLabel} ${it.dayOfMonth}" }) { d ->
             Card(
+                onClick = { onDayClick(d) },
                 modifier = Modifier.width(96.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = Color.White.copy(alpha = 0.5f),
@@ -55,6 +59,13 @@ internal fun DailyPanel(days: List<DayForecast>) {
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.secondary
                     )
+                    d.precipPct?.let {
+                        Text(
+                            "💧 $it%",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
                 }
             }
         }

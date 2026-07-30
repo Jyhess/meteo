@@ -16,10 +16,12 @@ interface OpenMeteoService {
     suspend fun forecast(
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,
-        @Query("current") current: String,
-        @Query("hourly") hourly: String,
-        @Query("daily") daily: String,
-        @Query("forecast_days") forecastDays: Int,
-        @Query("timezone") timezone: String,
+        @Query("current") current: String? = null,
+        @Query("hourly") hourly: String? = null,
+        @Query("daily") daily: String? = null,
+        @Query("forecast_days") forecastDays: Int? = null,
+        @Query("timezone") timezone: String = "auto",
+        @Query("start_date") startDate: String? = null,
+        @Query("end_date") endDate: String? = null,
     ): ForecastResponse
 }

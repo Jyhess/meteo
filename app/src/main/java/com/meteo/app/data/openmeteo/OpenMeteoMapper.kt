@@ -60,6 +60,7 @@ object OpenMeteoMapper {
         val dailyMax = daily?.maxC.orEmpty()
         val dailyMin = daily?.minC.orEmpty()
         val dailyCodes = daily?.weatherCode.orEmpty()
+        val dailyPrecip = daily?.precipitationProbabilityMax.orEmpty()
         val dailyWind = daily?.windSpeedMax.orEmpty()
 
         val now = LocalDateTime.now()
@@ -80,6 +81,7 @@ object OpenMeteoMapper {
                 precipAmount = hourlyPrecipAmount.getOrNull(i)?.toFloat(),
                 windSpeed = hourlyWind.getOrNull(i)?.roundToInt() ?: 0,
                 label = WeatherCondition.fromWMOCode(hourlyCodes.getOrNull(i)).description,
+                date = runCatching { parseLocalDateTime(t).toLocalDate() }.getOrNull()
             )
         }
 
@@ -166,7 +168,7 @@ object OpenMeteoMapper {
                         label = null,
                         precipPct = null,
                         precipAmount = null,
-                        windSpeed = null
+                        windSpeed = null,
                     )
                 }
             }
@@ -176,12 +178,15 @@ object OpenMeteoMapper {
             val minC = dailyMin.getOrNull(index)?.roundToInt() ?: 0
             val maxC = dailyMax.getOrNull(index)?.roundToInt() ?: 0
             val windSpeed = dailyWind.getOrNull(index)?.roundToInt() ?: 0
+            val precipProb = dailyPrecip.getOrNull(index)
             DayForecast(
+                date = d,
                 weekdayLabel = weekdayShort(d),
                 dayOfMonth = d.dayOfMonth,
                 minC = minC,
                 maxC = maxC,
                 windSpeed = windSpeed,
+                precipPct = precipProb,
                 label = WeatherCondition.fromWMOCode(dailyCodes.getOrNull(index)).description,
             )
         }.toList()
@@ -196,6 +201,32 @@ object OpenMeteoMapper {
             hourly = hourly24,
             daily5 = daily5,
         )
+    }
+
+    fun mapHourly(response: ForecastResponse): List<HourRow> {
+        val hourly = response.hourly ?: return emptyList()
+        val times = hourly.time.orEmpty()
+        val temps = hourly.temperature.orEmpty()
+        val codes = hourly.weatherCode.orEmpty()
+        val precipProbs = hourly.precipitationProbability.orEmpty()
+        val precipAmounts = hourly.precipitation.orEmpty()
+        val winds = hourly.windSpeed.orEmpty()
+
+        return times.indices.map { i ->
+            val t = times[i]
+            val timeLabel = runCatching {
+                parseLocalDateTime(t).format(hourMinuteFormatter)
+            }.getOrDefault("—")
+            HourRow(
+                timeLabel = timeLabel,
+                tempC = temps.getOrNull(i)?.roundToInt() ?: 0,
+                precipPct = precipProbs.getOrNull(i),
+                precipAmount = precipAmounts.getOrNull(i)?.toFloat(),
+                windSpeed = winds.getOrNull(i)?.roundToInt() ?: 0,
+                label = WeatherCondition.fromWMOCode(codes.getOrNull(i)).description,
+                date = runCatching { parseLocalDateTime(t).toLocalDate() }.getOrNull()
+            )
+        }
     }
 
     private data class NamedTarget(val name: String, val preferredHour: Int)

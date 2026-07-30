@@ -6,12 +6,14 @@ import androidx.lifecycle.viewModelScope
 import com.meteo.app.data.WeatherRepository
 import com.meteo.app.data.api.GeocodingResult
 import com.meteo.app.data.local.LocationStore
+import com.meteo.app.domain.HourRow
 import com.meteo.app.domain.SavedLocation
 import com.meteo.app.domain.WeatherData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 sealed class WeatherUiState {
     data object Loading : WeatherUiState()
@@ -24,6 +26,13 @@ sealed class WeatherUiState {
     data class Error(val message: String) : WeatherUiState()
 }
 
+sealed class DayHourlyState {
+    data object None : DayHourlyState()
+    data object Loading : DayHourlyState()
+    data class Success(val hours: List<HourRow>) : DayHourlyState()
+    data class Error(val message: String) : DayHourlyState()
+}
+
 class WeatherViewModel(
     private val repository: WeatherRepository,
     private val locationStore: LocationStore,
@@ -31,6 +40,9 @@ class WeatherViewModel(
 
     private val _state = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
     val state: StateFlow<WeatherUiState> = _state.asStateFlow()
+
+    private val _dayHourlyState = MutableStateFlow<DayHourlyState>(DayHourlyState.None)
+    val dayHourlyState: StateFlow<DayHourlyState> = _dayHourlyState.asStateFlow()
 
     private val _savedLocations = MutableStateFlow<List<SavedLocation>>(emptyList())
     val savedLocations: StateFlow<List<SavedLocation>> = _savedLocations.asStateFlow()
@@ -91,7 +103,7 @@ class WeatherViewModel(
                             isRefreshing = false,
                         )
                     }
-                }
+                },
             )
         }
     }
@@ -114,6 +126,30 @@ class WeatherViewModel(
 
     fun clearSearch() {
         _searchResults.value = emptyList()
+    }
+
+    fun loadHourlyForDay(location: SavedLocation, date: LocalDate?) {
+        if (date == null) {
+            _dayHourlyState.value = DayHourlyState.Error("Date invalide")
+            return
+        }
+        viewModelScope.launch {
+            _dayHourlyState.value = DayHourlyState.Loading
+            runCatching {
+                repository.fetchHourlyForDay(location.latitude, location.longitude, date)
+            }.fold(
+                onSuccess = { hours ->
+                    _dayHourlyState.value = DayHourlyState.Success(hours)
+                },
+                onFailure = { e ->
+                    _dayHourlyState.value = DayHourlyState.Error(e.message ?: "Impossible de charger le détail")
+                },
+            )
+        }
+    }
+
+    fun clearDayHourly() {
+        _dayHourlyState.value = DayHourlyState.None
     }
 }
 

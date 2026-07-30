@@ -1,46 +1,36 @@
 package com.meteo.app.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.meteo.app.R
+import com.meteo.app.domain.DayForecast
 import com.meteo.app.domain.WeatherCondition
 import com.meteo.app.domain.WeatherData
+import java.time.LocalDate
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherRoute(
     viewModel: WeatherViewModel,
@@ -48,18 +38,13 @@ fun WeatherRoute(
     onRefresh: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
+    val dayHourlyState by viewModel.dayHourlyState.collectAsState()
     var currentScreen by remember { mutableStateOf("weather") }
-
-    if (currentScreen == "hourly_chart_debug") {
-        HourlyChartDebugScreen(onBack = { currentScreen = "options" })
-        return
-    }
+    var selectedDay by remember { mutableStateOf<DayForecast?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     if (currentScreen == "options") {
-        OptionsScreen(
-            onBack = { currentScreen = "weather" },
-            onOpenHourlyChartDebug = { currentScreen = "hourly_chart_debug" },
-        )
+        OptionsScreen(onBack = { currentScreen = "weather" })
         return
     }
 
@@ -73,7 +58,7 @@ fun WeatherRoute(
     LaunchedEffect(state) {
         val s = state
         if (s is WeatherUiState.Success) {
-            val currentHourLabel = s.data.hourly?.firstOrNull()?.label
+            val currentHourLabel = s.data.hourly.firstOrNull()?.label
             val condition = WeatherCondition.entries.find {
                 it.description == (currentHourLabel ?: s.data.overview.today.label)
             }
@@ -156,12 +141,243 @@ fun WeatherRoute(
                                 .weight(1f)
                                 .padding(padding),
                             data = s.data,
+                            onDayClick = { selectedDay = it },
                         )
                     }
                 }
             }
         }
+
+        if ((selectedDay != null) && (state is WeatherUiState.Success)) {
+            val data = (state as WeatherUiState.Success).data
+            val initialPage = remember(selectedDay) {
+                data.daily5.indexOfFirst { it.date == selectedDay?.date }.coerceAtLeast(0)
+            }
+            val pagerState = rememberPagerState(initialPage = initialPage) { data.daily5.size }
+
+            LaunchedEffect(pagerState.currentPage) {
+                val day = data.daily5[pagerState.currentPage]
+                viewModel.loadHourlyForDay(
+                    (state as WeatherUiState.Success).currentLocation,
+                    day.date,
+                )
+            }
+
+            ModalBottomSheet(
+                onDismissRequest = { selectedDay = null },
+                sheetState = sheetState,
+                containerColor = MaterialTheme.colorScheme.surface,
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { page ->
+                    val day = data.daily5[page]
+                    DayDetailContent(
+                        day = day,
+                        dayHourlyState = dayHourlyState
+                    )
+                }
+            }
+        }
     }
+}
+
+@Composable
+private fun DayDetailContent(
+    day: DayForecast,
+    dayHourlyState: DayHourlyState,
+) {
+    val condition = remember(day.label) {
+        WeatherCondition.entries.find { it.description == day.label } ?: WeatherCondition.UNKNOWN
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = condition.bgRes),
+            contentDescription = null,
+            modifier = Modifier.matchParentSize(),
+            contentScale = ContentScale.Crop,
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            // En-tête Date
+            Column(
+                modifier = Modifier.padding(top = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = day.weekdayLabel,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = "${day.dayOfMonth} ${monthName(day.date)}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            }
+
+            // Carte Résumé sans fond translucide
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.Transparent,
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        WeatherIcon(day.label, modifier = Modifier.size(64.dp))
+                        Text(
+                            text = day.label,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.8f),
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                text = "${day.maxC}°",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White,
+                            )
+                            Text(
+                                text = "/ ${day.minC}°",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier.padding(bottom = 6.dp, start = 4.dp),
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            DetailBadge(icon = "💨", value = "${day.windSpeed} km/h")
+                            day.precipPct?.let {
+                                DetailBadge(icon = "💧", value = "$it%")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section Graphique
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Détails horaires",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier.padding(start = 8.dp, bottom = 12.dp),
+                )
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(24.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                ) {
+                    Box(modifier = Modifier.padding(vertical = 12.dp)) {
+                        when (dayHourlyState) {
+                            is DayHourlyState.Loading -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(168.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator(
+                                        strokeWidth = 3.dp,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+
+                            is DayHourlyState.Success -> {
+                                if (dayHourlyState.hours.isNotEmpty()) {
+                                    HourlyChart(hours = dayHourlyState.hours)
+                                } else {
+                                    EmptyHourlyState()
+                                }
+                            }
+
+                            is DayHourlyState.Error -> {
+                                Text(
+                                    text = dayHourlyState.message,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier
+                                        .padding(24.dp)
+                                        .align(Alignment.Center),
+                                )
+                            }
+
+                            else -> {}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailBadge(icon: String, value: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier
+            .background(Color.Transparent, RoundedCornerShape(8.dp))
+            .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)), RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(icon, fontSize = 12.sp)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+    }
+}
+
+@Composable
+private fun EmptyHourlyState() {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Pas de données détaillées",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.6f)
+        )
+    }
+}
+
+private fun monthName(date: LocalDate?): String {
+    if (date == null) return ""
+    return date.month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.FRENCH)
+        .replaceFirstChar { it.uppercase() }
 }
 
 @Composable
@@ -202,7 +418,7 @@ private fun OfflineWarningBanner() {
             imageVector = Icons.Default.CloudOff,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.onErrorContainer
+            tint = MaterialTheme.colorScheme.onErrorContainer,
         )
         Spacer(Modifier.size(8.dp))
         Text(
@@ -217,6 +433,7 @@ private fun OfflineWarningBanner() {
 private fun WeatherContent(
     modifier: Modifier = Modifier,
     data: WeatherData,
+    onDayClick: (DayForecast) -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -235,7 +452,7 @@ private fun WeatherContent(
         }
         item {
             SectionCard(title = stringResource(R.string.section_15_days)) {
-                DailyPanel(data.daily5)
+                DailyPanel(data.daily5, onDayClick = onDayClick)
             }
         }
     }

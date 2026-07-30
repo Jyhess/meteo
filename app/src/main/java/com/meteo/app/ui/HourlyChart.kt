@@ -58,7 +58,7 @@ internal fun HourlyChart(hours: List<HourRow>) {
     val maxPower = windMaxLimit.pow(windExponent)
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        val fullMaxHeight = 112.dp // Hauteur fixée du canvas
+        val fullMaxHeight = 168.dp // Hauteur fixée du canvas (112 * 1.5)
         val chartHeightDp = fullMaxHeight * ChartHeightFraction
         val chartBottomDp = fullMaxHeight * ChartBottomFraction
 

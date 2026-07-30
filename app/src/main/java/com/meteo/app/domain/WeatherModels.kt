@@ -127,13 +127,16 @@ data class HourRow(
     val precipAmount: Float?,
     val windSpeed: Int,
     val label: String,
+    val date: LocalDate? = null,
 )
 
 data class DayForecast(
+    val date: LocalDate? = null,
     val weekdayLabel: String,
     val dayOfMonth: Int,
     val minC: Int,
     val maxC: Int,
     val windSpeed: Int,
+    val precipPct: Int? = null,
     val label: String,
 )
