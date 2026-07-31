@@ -2,14 +2,28 @@ package com.meteo.app.data.local
 
 import android.content.Context
 import androidx.core.content.edit
-import com.google.gson.Gson
+import com.google.gson.*
 import com.google.gson.reflect.TypeToken
 import com.meteo.app.domain.SavedLocation
 import com.meteo.app.domain.WeatherData
+import java.lang.reflect.Type
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class LocationStore(context: Context) {
     private val prefs = context.getSharedPreferences("meteo_locations", Context.MODE_PRIVATE)
-    private val gson = Gson()
+
+    private val gson = GsonBuilder()
+        .registerTypeAdapter(LocalDate::class.java, object : JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
+            private val formatter = DateTimeFormatter.ISO_LOCAL_DATE
+            override fun serialize(src: LocalDate, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+                return JsonPrimitive(src.format(formatter))
+            }
+            override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): LocalDate {
+                return LocalDate.parse(json.asString, formatter)
+            }
+        })
+        .create()
 
     fun getLocations(): List<SavedLocation> {
         val json = prefs.getString("locations", null) ?: return emptyList()
