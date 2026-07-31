@@ -180,16 +180,17 @@ object OpenMeteoMapper {
             val maxC = dailyMax.getOrNull(index)?.roundToInt() ?: 0
             val windSpeed = dailyWind.getOrNull(index)?.roundToInt() ?: 0
             val precipProb = dailyPrecip.getOrNull(index)
-            val precipAmount = dailyPrecipSum.getOrNull(index)?.toFloat()
+            val precipAmountValue = dailyPrecipSum.getOrNull(index)?.toFloat()
             DayForecast(
                 date = d,
                 weekdayLabel = weekdayShort(d),
                 dayOfMonth = d.dayOfMonth,
                 minC = minC,
                 maxC = maxC,
-                windSpeed = windSpeed,
+                minWindSpeed = (windSpeed * 0.4f).toInt(), // Approximation
+                maxWindSpeed = windSpeed,
                 precipPct = precipProb,
-                precipAmount = precipAmount,
+                precipAmount = precipAmountValue,
                 label = WeatherCondition.fromWMOCode(dailyCodes.getOrNull(index)).description,
             )
         }.toList()

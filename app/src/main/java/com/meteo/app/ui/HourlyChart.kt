@@ -1,6 +1,7 @@
 package com.meteo.app.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -16,10 +17,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -32,9 +36,8 @@ import kotlin.math.max
 import kotlin.math.pow
 
 private val TempCurveColor = Color(0xFFFFD54F)
-private val TempFillColor = Color(0xFFFFD54F).copy(alpha = 0.22f)
 private val PrecipColor = Color(0xFF0D47A1)
-private val PrecipBarColor = PrecipColor.copy(alpha = 0.75f)
+private val PrecipBarColor = PrecipColor.copy(alpha = 0.9f)
 private val WindCurveColor = Color.White
 
 private const val ChartTopFraction = 0.05f
@@ -53,11 +56,16 @@ internal fun HourlyChart(hours: List<HourRow>) {
     val scaleMax = vMax + 5f
     val range = max(scaleMax - scaleMin, 1f)
 
-    val windMaxLimit = 100f
-    val windExponent = 0.5f
+    val windMaxLimit = 60f
+    val windExponent = 0.7f // Adjusted from 2.0 to improve visibility of low wind speeds
     val maxPower = windMaxLimit.pow(windExponent)
 
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White.copy(alpha = 0.25f), androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+            .padding(bottom = 8.dp),
+    ) {
         val fullMaxHeight = 168.dp // Hauteur fixée du canvas (112 * 1.5)
         val chartHeightDp = fullMaxHeight * ChartHeightFraction
         val chartBottomDp = fullMaxHeight * ChartBottomFraction
@@ -74,7 +82,13 @@ internal fun HourlyChart(hours: List<HourRow>) {
             )
             HourlyTimeLabels(
                 hours = hours,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Color(0xFF003366).copy(alpha = 0.5f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                    )
+                    .padding(vertical = 2.dp),
             )
         }
 
@@ -86,34 +100,42 @@ internal fun HourlyChart(hours: List<HourRow>) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 6.dp, y = yOffset - 11.dp + 4.dp) // +4dp pour le padding top du canvas
-                    .height(22.dp),
+                    .offset(x = 4.dp, y = yOffset - 11.dp + 4.dp)
+                    .background(
+                        color = Color(0xFF003366).copy(alpha = 0.5f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                    )
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
                 contentAlignment = Alignment.CenterStart,
             ) {
                 Text(
                     text = "${valDeg.toInt()}°",
-                    color = TempCurveColor.copy(alpha = 0.95f),
-                    fontSize = 11.sp,
+                    color = getTempColor(valDeg),
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                 )
             }
         }
 
         // Wind Scale (Right)
-        listOf(10f, 30f, 60f, 100f).forEach { windVal ->
+        listOf(10f, 20f, 40f, 60f).forEach { windVal ->
             val normalized = (windVal.pow(windExponent) / maxPower).coerceIn(0f, 1f)
             val yOffset = chartBottomDp - (chartHeightDp * normalized)
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .offset(x = (-6).dp, y = yOffset - 11.dp + 4.dp)
-                    .height(22.dp),
+                    .offset(x = (-4).dp, y = yOffset - 11.dp + 4.dp)
+                    .background(
+                        color = Color(0xFF003366).copy(alpha = 0.5f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                    )
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
                 contentAlignment = Alignment.CenterEnd,
             ) {
                 Text(
                     text = windVal.toInt().toString(),
                     color = WindCurveColor.copy(alpha = 0.9f),
-                    fontSize = 10.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                 )
             }
@@ -138,9 +160,11 @@ private fun HourlyTimeLabels(
                     Text(
                         text = compactHourLabel(hour.timeLabel),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                        fontSize = 13.sp,
+                        color = Color.White,
                         maxLines = 1,
-                        overflow = TextOverflow.Clip,
+                        softWrap = false,
+                        overflow = TextOverflow.Visible,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -173,8 +197,8 @@ private fun HourlyCurvesCanvas(
         temps.map { ((it - scaleMin) / range).coerceIn(0f, 1f) }
     }
 
-    val windMaxLimit = 100f
-    val windExponent = 0.5f // Square root for better distribution of wind speeds
+    val windMaxLimit = 60f
+    val windExponent = 0.7f // Adjusted from 2.0 to improve visibility of low wind speeds
     val maxPower = windMaxLimit.pow(windExponent)
     val normalizedWinds = remember(winds, maxPower) {
         winds.map { (it.coerceIn(0f, windMaxLimit).pow(windExponent) / maxPower).coerceIn(0f, 1f) }
@@ -216,7 +240,13 @@ private fun HourlyCurvesCanvas(
                     close()
                 }
             }
-            drawPath(tempFillPath, TempFillColor)
+
+            val fillBrush = Brush.verticalGradient(
+                colors = listOf(getTempColor(scaleMax, 0.3f), getTempColor(scaleMin, 0.3f)),
+                startY = chartTop,
+                endY = chartBottom
+            )
+            drawPath(tempFillPath, fillBrush)
 
             drawSeries(tempPoints, TempCurveColor, strokeWidth)
             drawSeries(windPoints, WindCurveColor, strokeWidth)
@@ -247,10 +277,11 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPrecipBars(
         val barHeight = (scaledFraction * chartHeight).coerceAtLeast(5f)
         val centerX = chartLeft + (slotWidth * index) + (slotWidth / 2f)
 
-        drawRect(
+        drawRoundRect(
             color = PrecipBarColor,
             topLeft = Offset(centerX - (barWidth / 2f), chartBottom - barHeight),
             size = Size(barWidth, barHeight),
+            cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f)
         )
     }
 }
@@ -270,10 +301,14 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSeries(
             lineTo(points[index].x, points[index].y)
         }
     }
-    drawPath(linePath, color, style = Stroke(width = strokeWidth))
+    drawPath(linePath, color, style = Stroke(width = strokeWidth, cap = StrokeCap.Round))
 }
 
 private fun compactHourLabel(timeLabel: String): String {
-    val hourPart = timeLabel.substringBefore(':').trimStart('0').ifEmpty { "0" }
-    return "${hourPart}h"
+    // On extrait uniquement les chiffres du début du label
+    val hourMatch = Regex("""\d+""").find(timeLabel)
+    val hourPart = hourMatch?.value ?: "0"
+    // On enlève le '0' initial (ex: "01" -> "1") mais on garde "0" si c'est minuit
+    val cleanedHour = hourPart.trimStart('0').ifEmpty { "0" }
+    return "${cleanedHour}h"
 }

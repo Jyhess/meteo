@@ -55,7 +55,7 @@ internal fun DailyPanel(
                         color = MaterialTheme.colorScheme.secondary
                     )
                     Text(
-                        "💨 ${d.windSpeed} km/h",
+                        "💨 ${d.maxWindSpeed} km/h",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.secondary
                     )

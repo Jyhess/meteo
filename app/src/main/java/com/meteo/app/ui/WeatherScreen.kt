@@ -293,7 +293,7 @@ private fun DayDetailContent(
                             modifier = Modifier.padding(top = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
-                            DetailBadge(icon = "💨", value = "${day.windSpeed} km/h")
+                            DetailBadge(icon = "💨", value = "${day.maxWindSpeed} km/h")
                             if (day.precipPct != null || (day.precipAmount ?: 0f) > 0f) {
                                 val pct = day.precipPct?.let { "$it%" } ?: ""
                                 val amount = day.precipAmount?.let { 
@@ -474,6 +474,11 @@ private fun WeatherContent(
         item {
             SectionCard(title = stringResource(R.string.section_next_hours)) {
                 HourlyPanel(data.hourly)
+            }
+        }
+        item {
+            SectionCard(title = "Tendance 7 jours") {
+                DailyChart(data.daily5)
             }
         }
         item {

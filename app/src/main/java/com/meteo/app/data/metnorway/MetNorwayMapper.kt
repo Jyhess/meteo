@@ -68,7 +68,7 @@ object MetNorwayMapper {
             val date = LocalDate.parse(dateStr)
             val temps = dayData.mapNotNull { it.data.instant.details.airTemperature }
             val winds = dayData.mapNotNull { it.data.instant.details.windSpeed }
-            val precips = dayData.mapNotNull { (it.data.next1h ?: it.data.next6h)?.details?.precipitationProbability }
+            val precipProbs = dayData.mapNotNull { (it.data.next1h ?: it.data.next6h)?.details?.precipitationProbability }
             val precipAmounts = dayData.mapNotNull { (it.data.next1h ?: it.data.next6h)?.details?.precipitationAmount }
             DayForecast(
                 date = date,
@@ -77,8 +77,9 @@ object MetNorwayMapper {
                 dayOfMonth = date.dayOfMonth,
                 minC = temps.minOrNull()?.toInt() ?: 0,
                 maxC = temps.maxOrNull()?.toInt() ?: 0,
-                windSpeed = winds.maxOrNull()?.toInt() ?: 0,
-                precipPct = precips.maxOrNull()?.toInt(),
+                minWindSpeed = winds.minOrNull()?.toInt() ?: 0,
+                maxWindSpeed = winds.maxOrNull()?.toInt() ?: 0,
+                precipPct = precipProbs.maxOrNull()?.toInt(),
                 precipAmount = precipAmounts.sum().toFloat(),
                 label = dayData.firstOrNull { it.data.next6h != null }?.data?.next6h?.summary?.symbolCode?.toDescription() ?: WeatherCondition.VARIABLE.description
             )
