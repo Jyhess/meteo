@@ -54,8 +54,12 @@ class WeatherViewModel(
     val searchResults: StateFlow<List<GeocodingResult>> = _searchResults.asStateFlow()
 
     init {
-        _savedLocations.value = locationStore.getLocations()
-        _history.value = locationStore.getHistory()
+        viewModelScope.launch {
+            runCatching {
+                _savedLocations.value = locationStore.getLocations()
+                _history.value = locationStore.getHistory()
+            }
+        }
     }
 
     fun load(location: SavedLocation, addToHistory: Boolean = false) {
@@ -84,10 +88,12 @@ class WeatherViewModel(
                         isOffline = false,
                         isRefreshing = false,
                     )
-                    locationStore.saveLastWeather(location, weather)
-                    if (addToHistory) {
-                        locationStore.addToHistory(location)
-                        _history.value = locationStore.getHistory()
+                    viewModelScope.launch {
+                        locationStore.saveLastWeather(location, weather)
+                        if (addToHistory) {
+                            locationStore.addToHistory(location)
+                            _history.value = locationStore.getHistory()
+                        }
                     }
                 },
                 onFailure = { e ->
@@ -109,8 +115,10 @@ class WeatherViewModel(
     }
 
     fun toggleFavorite(location: SavedLocation) {
-        locationStore.toggleFavorite(location)
-        _savedLocations.value = locationStore.getLocations()
+        viewModelScope.launch {
+            locationStore.toggleFavorite(location)
+            _savedLocations.value = locationStore.getLocations()
+        }
     }
 
     fun search(query: String) {

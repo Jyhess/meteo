@@ -6,10 +6,13 @@ import com.meteo.app.data.WeatherProvider
 import com.meteo.app.data.api.OpenMeteoService
 import java.time.LocalDate
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 class OpenMeteoProvider(private val api: OpenMeteoService) : WeatherProvider {
     override val priority: Int = 1
 
-    override suspend fun fetchWeather(latitude: Double, longitude: Double, locationLabel: String): WeatherData {
+    override suspend fun fetchWeather(latitude: Double, longitude: Double, locationLabel: String): WeatherData = withContext(Dispatchers.Default) {
         // Appal 1: Données actuelles et prévisions journalières (16 jours)
         val dailyResponse = api.forecast(
             latitude = latitude,
@@ -32,10 +35,10 @@ class OpenMeteoProvider(private val api: OpenMeteoService) : WeatherProvider {
         // Fusion des données : on injecte l'hourly de l'appel 2 dans la réponse globale
         val mergedResponse = dailyResponse.copy(hourly = hourlyResponse.hourly)
         
-        return OpenMeteoMapper.buildUi(mergedResponse, locationLabel)
+        OpenMeteoMapper.buildUi(mergedResponse, locationLabel)
     }
 
-    override suspend fun fetchHourlyForDay(latitude: Double, longitude: Double, date: LocalDate): List<HourRow> {
+    override suspend fun fetchHourlyForDay(latitude: Double, longitude: Double, date: LocalDate): List<HourRow> = withContext(Dispatchers.Default) {
         val dateStr = date.toString()
         val response = api.forecast(
             latitude = latitude,
@@ -45,6 +48,6 @@ class OpenMeteoProvider(private val api: OpenMeteoService) : WeatherProvider {
             endDate = dateStr,
             timezone = "auto"
         )
-        return OpenMeteoMapper.mapHourly(response)
+        OpenMeteoMapper.mapHourly(response)
     }
 }

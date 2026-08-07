@@ -191,7 +191,7 @@ private fun DayDetailContent(
     dayHourlyState: DayHourlyState,
 ) {
     val condition = remember(day.label) {
-        WeatherCondition.entries.find { it.description == day.label } ?: WeatherCondition.UNKNOWN
+        WeatherCondition.entries.find { it.description == (day.label ?: "") } ?: WeatherCondition.UNKNOWN
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -232,7 +232,7 @@ private fun DayDetailContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = day.weekdayLabel,
+                    text = day.weekdayLabel ?: "",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White.copy(alpha = 0.9f),
                     fontWeight = FontWeight.Bold,
@@ -263,9 +263,9 @@ private fun DayDetailContent(
                         modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        WeatherIcon(day.label, modifier = Modifier.size(64.dp))
+                        WeatherIcon(day.label ?: "", modifier = Modifier.size(64.dp))
                         Text(
-                            text = day.label,
+                            text = day.label ?: "",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.White.copy(alpha = 0.8f),
                             textAlign = TextAlign.Center,

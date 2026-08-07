@@ -68,7 +68,11 @@ internal fun WeatherTopBar(
                     )
                 }
             } else {
-                Box(modifier = Modifier.fillMaxWidth()) {
+                ExposedDropdownMenuBox(
+                    expanded = isSearching,
+                    onExpandedChange = { },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     TextField(
                         value = query,
                         onValueChange = {
@@ -77,6 +81,7 @@ internal fun WeatherTopBar(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .menuAnchor(MenuAnchorType.PrimaryEditable)
                             .focusRequester(focusRequester),
                         placeholder = { Text(stringResource(R.string.search_city)) },
                         singleLine = true,
@@ -103,11 +108,10 @@ internal fun WeatherTopBar(
                         }
                     )
 
-                    DropdownMenu(
+                    ExposedDropdownMenu(
                         expanded = isSearching,
-                        onDismissRequest = { /* Handle via focus or close button */ },
-                        modifier = Modifier.fillMaxWidth(0.9f),
-                        properties = PopupProperties(focusable = false)
+                        onDismissRequest = { /* Géré via focus */ },
+                        modifier = Modifier.fillMaxWidth(0.9f)
                     ) {
                         if (query.isEmpty()) {
                             DropdownMenuItem(
@@ -122,7 +126,7 @@ internal fun WeatherTopBar(
                                 ListHeader("Favoris")
                                 savedLocations.forEach { loc ->
                                     DropdownMenuItem(
-                                        text = { Text(loc.name) },
+                                        text = { Text(loc.name ?: "") },
                                         leadingIcon = { Icon(Icons.Default.Star, null, tint = MaterialTheme.colorScheme.primary) },
                                         onClick = {
                                             viewModel.load(loc, addToHistory = true)
@@ -135,7 +139,7 @@ internal fun WeatherTopBar(
                                 ListHeader("Récents")
                                 history.forEach { loc ->
                                     DropdownMenuItem(
-                                        text = { Text(loc.name) },
+                                        text = { Text(loc.name ?: "") },
                                         leadingIcon = { Icon(Icons.Default.History, null) },
                                         onClick = {
                                             viewModel.load(loc, addToHistory = true)
@@ -149,7 +153,7 @@ internal fun WeatherTopBar(
                                 DropdownMenuItem(
                                     text = {
                                         Column {
-                                            Text(res.name)
+                                            Text(res.name ?: "")
                                             Text(
                                                 "${res.admin1 ?: ""}, ${res.country ?: ""}",
                                                 style = MaterialTheme.typography.bodySmall,

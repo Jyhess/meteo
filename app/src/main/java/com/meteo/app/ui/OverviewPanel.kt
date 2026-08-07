@@ -29,13 +29,15 @@ import com.meteo.app.domain.WeatherData
 
 @Composable
 internal fun OverviewPanel(data: WeatherData) {
+    val slots = data.overview?.periodSlots ?: return
+
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        itemsIndexed(data.overview.periodSlots) { index, slot ->
-            val hasDayBreak = index > 0 && data.overview.periodSlots[index - 1].date != slot.date
+        itemsIndexed(slots) { index, slot ->
+            val hasDayBreak = index > 0 && slots[index - 1].date != slot.date
 
             if (hasDayBreak) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -43,7 +45,7 @@ internal fun OverviewPanel(data: WeatherData) {
                     // Même valeur que l'espacement du LazyRow pour centrer le séparateur.
                     Spacer(modifier = Modifier.width(10.dp))
                     PeriodCell(
-                        title = slot.displayTitle,
+                        title = slot.displayTitle ?: "",
                         tempC = slot.tempC,
                         label = slot.label,
                         precipPct = slot.precipPct,
@@ -52,7 +54,7 @@ internal fun OverviewPanel(data: WeatherData) {
                 }
             } else {
                 PeriodCell(
-                    title = slot.displayTitle,
+                    title = slot.displayTitle ?: "",
                     tempC = slot.tempC,
                     label = slot.label,
                     precipPct = slot.precipPct,

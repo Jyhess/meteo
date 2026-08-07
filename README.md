@@ -22,6 +22,15 @@ Meteo is a simple and fast Android weather app, with no ads or trackers.
 3. Sync the project with Gradle files.
 4. Run the app on an emulator or a physical device.
 
+## 🧪 Testing
+
+
+### Run Unit Tests
+
+```bash
+./gradlew :app:testDebugUnitTest
+```
+
 ## 📦 Build APK
 
 ### Build new version and copy to output directory.

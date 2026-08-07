@@ -10,8 +10,11 @@ import java.lang.reflect.Type
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 class LocationStore(context: Context) {
-    private val prefs = context.getSharedPreferences("meteo_locations", Context.MODE_PRIVATE)
+    private val prefs = context.applicationContext.getSharedPreferences("meteo_locations", Context.MODE_PRIVATE)
 
     private val gson = GsonBuilder()
         .registerTypeAdapter(LocalDate::class.java, object : JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
@@ -25,43 +28,58 @@ class LocationStore(context: Context) {
         })
         .create()
 
-    fun getLocations(): List<SavedLocation> {
-        val json = prefs.getString("locations", null) ?: return emptyList()
+    suspend fun getLocations(): List<SavedLocation> = withContext(Dispatchers.IO) {
+        val json = prefs.getString("locations", null) ?: return@withContext emptyList<SavedLocation>()
         val type = object : TypeToken<List<SavedLocation>>() {}.type
-        return gson.fromJson(json, type)
+        try {
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 
-    fun getHistory(): List<SavedLocation> {
-        val json = prefs.getString("history", null) ?: return emptyList()
+    suspend fun getHistory(): List<SavedLocation> = withContext(Dispatchers.IO) {
+        val json = prefs.getString("history", null) ?: return@withContext emptyList<SavedLocation>()
         val type = object : TypeToken<List<SavedLocation>>() {}.type
-        return gson.fromJson(json, type)
+        try {
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 
-    fun saveLocations(locations: List<SavedLocation>) {
+    suspend fun saveLocations(locations: List<SavedLocation>) = withContext(Dispatchers.IO) {
         val json = gson.toJson(locations)
         prefs.edit { putString("locations", json) }
     }
 
-    private fun saveHistory(history: List<SavedLocation>) {
+    private suspend fun saveHistory(history: List<SavedLocation>) = withContext(Dispatchers.IO) {
         val json = gson.toJson(history)
         prefs.edit { putString("history", json) }
     }
 
-    fun saveLastWeather(location: SavedLocation, weather: WeatherData) {
+    suspend fun saveLastWeather(location: SavedLocation, weather: WeatherData) = withContext(Dispatchers.IO) {
         val json = gson.toJson(weather)
         prefs.edit { putString("last_weather_${location.name}", json) }
     }
 
-    fun getLastWeather(location: SavedLocation): WeatherData? {
-        val json = prefs.getString("last_weather_${location.name}", null) ?: return null
-        return try {
-            gson.fromJson(json, WeatherData::class.java)
-        } catch (e: Exception) {
+    suspend fun getLastWeather(location: SavedLocation): WeatherData? = withContext(Dispatchers.IO) {
+        val json = prefs.getString("last_weather_${location.name}", null) ?: return@withContext null
+        try {
+            val data = gson.fromJson(json, WeatherData::class.java)
+            // Validation: Gson peut mettre des champs non-nullables à null s'ils manquent dans le JSON.
+            // On vérifie les champs critiques pour éviter des NPE plus tard dans l'UI.
+            if (data?.overview == null || data.daily5 == null) {
+                null
+            } else {
+                data
+            }
+        } catch (_: Exception) {
             null
         }
     }
 
-    fun addToHistory(location: SavedLocation) {
+    suspend fun addToHistory(location: SavedLocation) = withContext(Dispatchers.IO) {
         val current = getHistory().toMutableList()
         current.removeAll { it.name == location.name }
         current.add(0, location.copy(isDefault = false))
@@ -69,7 +87,7 @@ class LocationStore(context: Context) {
         saveHistory(limited)
     }
 
-    fun toggleFavorite(location: SavedLocation) {
+    suspend fun toggleFavorite(location: SavedLocation) = withContext(Dispatchers.IO) {
         val favorites = getLocations().toMutableList()
         val exists = favorites.find { it.name == location.name }
         if (exists != null) {

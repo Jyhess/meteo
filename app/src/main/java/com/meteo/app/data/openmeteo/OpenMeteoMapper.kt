@@ -56,6 +56,11 @@ object OpenMeteoMapper {
         val hourlyPrecipAmount = hourly?.precipitation.orEmpty()
         val hourlyWind = hourly?.windSpeed.orEmpty()
 
+        // Pré-parsing des dates horaires pour éviter de le refaire dans chaque boucle
+        val parsedHourlyTimes = hourlyTimes.map { t ->
+            runCatching { parseLocalDateTime(t) }.getOrNull()
+        }
+
         val dailyDates = daily?.time.orEmpty()
         val dailyMax = daily?.maxC.orEmpty()
         val dailyMin = daily?.minC.orEmpty()
@@ -66,15 +71,13 @@ object OpenMeteoMapper {
 
         val now = LocalDateTime.now()
         val slotStart = now.withMinute(0).withSecond(0).withNano(0)
-        val startIndex = hourlyTimes.indexOfFirst { t ->
-            runCatching { parseLocalDateTime(t) }.getOrNull()?.let { it >= slotStart } == true
-        }.takeIf { it >= 0 } ?: 0
+        
+        val startIndex = parsedHourlyTimes.indexOfFirst { it != null && it >= slotStart }
+            .takeIf { it >= 0 } ?: 0
 
         val hourly24 = (startIndex until minOf(startIndex + 24, hourlyTimes.size)).map { i ->
-            val t = hourlyTimes[i]
-            val timeLabel = runCatching {
-                parseLocalDateTime(t).format(hourMinuteFormatter)
-            }.getOrDefault("—")
+            val dt = parsedHourlyTimes[i]
+            val timeLabel = dt?.format(hourMinuteFormatter) ?: "—"
             HourRow(
                 timeLabel = timeLabel,
                 tempC = hourlyTemps.getOrNull(i)?.roundToInt() ?: 0,
@@ -82,7 +85,7 @@ object OpenMeteoMapper {
                 precipAmount = hourlyPrecipAmount.getOrNull(i)?.toFloat(),
                 windSpeed = hourlyWind.getOrNull(i)?.roundToInt() ?: 0,
                 label = WeatherCondition.fromWMOCode(hourlyCodes.getOrNull(i)).description,
-                date = runCatching { parseLocalDateTime(t).toLocalDate() }.getOrNull()
+                date = dt?.toLocalDate()
             )
         }
 
@@ -112,10 +115,10 @@ object OpenMeteoMapper {
 
         val tomorrowSlots = if (tomorrowLocalDate != null) {
             targets.map { target ->
-                val best = findBestHourlyForDay(
+                val best = findBestHourlyForDayOptimized(
                     date = tomorrowLocalDate,
                     preferredHour = target.preferredHour,
-                    hourlyTimes = hourlyTimes,
+                    parsedHourlyTimes = parsedHourlyTimes,
                     hourlyTemps = hourlyTemps,
                     hourlyCodes = hourlyCodes,
                 )
@@ -144,12 +147,11 @@ object OpenMeteoMapper {
             }
             .take(4)
             .map { (date, type) ->
-                val candidates = hourlyTimes.mapIndexedNotNull { idx, iso ->
-                    val t = runCatching { parseLocalDateTime(iso) }.getOrNull() ?: return@mapIndexedNotNull null
-                    if (t.toLocalDate() != date) return@mapIndexedNotNull null
+                val best = parsedHourlyTimes.mapIndexedNotNull { idx, t ->
+                    if (t == null || t.toLocalDate() != date) return@mapIndexedNotNull null
                     Triple(idx, abs(t.hour - type.preferredHour), t.hour)
-                }
-                val best = candidates.minByOrNull { it.second }
+                }.minByOrNull { it.second }
+
                 if (best != null) {
                     val i = best.first
                     PeriodSlot(
@@ -216,11 +218,9 @@ object OpenMeteoMapper {
         val precipAmounts = hourly.precipitation.orEmpty()
         val winds = hourly.windSpeed.orEmpty()
 
-        return times.indices.map { i ->
-            val t = times[i]
-            val timeLabel = runCatching {
-                parseLocalDateTime(t).format(hourMinuteFormatter)
-            }.getOrDefault("—")
+        return times.mapIndexed { i, t ->
+            val dt = runCatching { parseLocalDateTime(t) }.getOrNull()
+            val timeLabel = dt?.format(hourMinuteFormatter) ?: "—"
             HourRow(
                 timeLabel = timeLabel,
                 tempC = temps.getOrNull(i)?.roundToInt() ?: 0,
@@ -228,23 +228,22 @@ object OpenMeteoMapper {
                 precipAmount = precipAmounts.getOrNull(i)?.toFloat(),
                 windSpeed = winds.getOrNull(i)?.roundToInt() ?: 0,
                 label = WeatherCondition.fromWMOCode(codes.getOrNull(i)).description,
-                date = runCatching { parseLocalDateTime(t).toLocalDate() }.getOrNull()
+                date = dt?.toLocalDate()
             )
         }
     }
 
     private data class NamedTarget(val name: String, val preferredHour: Int)
 
-    private fun findBestHourlyForDay(
+    private fun findBestHourlyForDayOptimized(
         date: LocalDate,
         preferredHour: Int,
-        hourlyTimes: List<String>,
+        parsedHourlyTimes: List<LocalDateTime?>,
         hourlyTemps: List<Double>,
         hourlyCodes: List<Int>,
     ): Pair<Int, Int?> {
-        val candidates = hourlyTimes.mapIndexedNotNull { idx, iso ->
-            val t = runCatching { parseLocalDateTime(iso) }.getOrNull() ?: return@mapIndexedNotNull null
-            if (t.toLocalDate() != date) return@mapIndexedNotNull null
+        val candidates = parsedHourlyTimes.mapIndexedNotNull { idx, t ->
+            if (t == null || t.toLocalDate() != date) return@mapIndexedNotNull null
             Triple(idx, abs(t.hour - preferredHour), t.hour)
         }
         if (candidates.isEmpty()) {

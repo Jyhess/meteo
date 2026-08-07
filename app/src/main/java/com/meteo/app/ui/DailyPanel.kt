@@ -40,10 +40,10 @@ internal fun DailyPanel(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
-                        "${d.weekdayLabel.lowercase()} ${d.dayOfMonth}",
+                        "${d.weekdayLabel?.lowercase() ?: ""} ${d.dayOfMonth}",
                         style = MaterialTheme.typography.labelLarge,
                     )
-                    WeatherIcon(d.label)
+                    WeatherIcon(d.label ?: "")
                     Text(
                         "${d.maxC}°",
                         style = MaterialTheme.typography.titleLarge,

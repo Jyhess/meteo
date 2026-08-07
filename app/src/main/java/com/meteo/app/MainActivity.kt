@@ -26,7 +26,7 @@ import com.meteo.app.ui.theme.MeteoTheme
 class MainActivity : ComponentActivity() {
 
     private val fused by lazy { LocationServices.getFusedLocationProviderClient(this) }
-    private val locationStore by lazy { LocationStore(this) }
+    private val locationStore by lazy { LocationStore(applicationContext) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +34,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             MeteoTheme {
                 val vm: WeatherViewModel = viewModel(
-                    factory = WeatherViewModelFactory(WeatherRepository(), locationStore),
+                    factory = androidx.compose.runtime.remember { 
+                        WeatherViewModelFactory(WeatherRepository(), locationStore) 
+                    },
                 )
 
                 val permissionLauncher = rememberLauncherForActivityResult(

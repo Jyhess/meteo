@@ -11,11 +11,12 @@ import androidx.compose.ui.unit.dp
 import com.meteo.app.domain.WeatherCondition
 
 @Composable
-internal fun WeatherIcon(label: String, modifier: Modifier = Modifier) {
-    val condition = WeatherCondition.entries.find { it.description == label } ?: WeatherCondition.UNKNOWN
+internal fun WeatherIcon(label: String?, modifier: Modifier = Modifier) {
+    val nonNullLabel = label ?: ""
+    val condition = WeatherCondition.entries.find { it.description == nonNullLabel } ?: WeatherCondition.UNKNOWN
     Image(
         painter = painterResource(id = condition.iconRes),
-        contentDescription = label,
+        contentDescription = nonNullLabel,
         modifier = modifier.size(48.dp)
     )
 }
