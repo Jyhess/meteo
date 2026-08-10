@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,7 +46,11 @@ private const val ChartTopFraction = 0.05f
 private const val ChartBottomFraction = 0.95f
 private const val ChartHeightFraction = ChartBottomFraction - ChartTopFraction
 
-private const val PrecipExponent = 0.6f
+private const val WindExponent = 0.7f
+private const val WindMaxLimit = 60f
+
+private const val PrecipExponent = 0.7f
+private const val PrecipMaxLimit = 30f
 
 @Composable
 internal fun HourlyChart(hours: List<HourRow>) {
@@ -56,8 +62,8 @@ internal fun HourlyChart(hours: List<HourRow>) {
     val scaleMax = vMax + 5f
     val range = max(scaleMax - scaleMin, 1f)
 
-    val windMaxLimit = 60f
-    val windExponent = 0.7f // Adjusted from 2.0 to improve visibility of low wind speeds
+    val windMaxLimit = WindMaxLimit
+    val windExponent = WindExponent
     val maxPower = windMaxLimit.pow(windExponent)
 
     Box(
@@ -117,11 +123,11 @@ internal fun HourlyChart(hours: List<HourRow>) {
             }
         }
 
-        // Wind Scale (Right)
-        listOf(10f, 20f, 40f, 60f).forEach { windVal ->
+        // Joint Wind & Rain Scale (Right)
+        listOf(10f to 5f, 20f to 10f, 40f to 20f, 60f to 30f).forEach { (windVal, rainVal) ->
             val normalized = (windVal.pow(windExponent) / maxPower).coerceIn(0f, 1f)
             val yOffset = chartBottomDp - (chartHeightDp * normalized)
-            Box(
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .offset(x = (-4).dp, y = yOffset - 11.dp + 4.dp)
@@ -130,8 +136,15 @@ internal fun HourlyChart(hours: List<HourRow>) {
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
                     )
                     .padding(horizontal = 4.dp, vertical = 2.dp),
-                contentAlignment = Alignment.CenterEnd,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Text(
+                    text = rainVal.toInt().toString(),
+                    color = PrecipColor.copy(alpha = 0.9f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.width(4.dp))
                 Text(
                     text = windVal.toInt().toString(),
                     color = WindCurveColor.copy(alpha = 0.9f),
@@ -197,9 +210,10 @@ private fun HourlyCurvesCanvas(
         temps.map { ((it - scaleMin) / range).coerceIn(0f, 1f) }
     }
 
-    val windMaxLimit = 60f
-    val windExponent = 0.7f // Adjusted from 2.0 to improve visibility of low wind speeds
+    val windMaxLimit = WindMaxLimit
+    val windExponent = WindExponent
     val maxPower = windMaxLimit.pow(windExponent)
+
     val normalizedWinds = remember(winds, maxPower) {
         winds.map { (it.coerceIn(0f, windMaxLimit).pow(windExponent) / maxPower).coerceIn(0f, 1f) }
     }
@@ -266,13 +280,13 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPrecipBars(
 
     val slotWidth = (chartRight - chartLeft) / slotCount
     val barWidth = slotWidth * 0.55f
+    val precipMaxPower = PrecipMaxLimit.pow(PrecipExponent)
 
     hours.forEachIndexed { index, hour ->
         val precip = hour.precipAmount ?: return@forEachIndexed
         if (precip <= 0) return@forEachIndexed
 
-        val precipFraction = (precip / 100f).coerceIn(0f, 1f)
-        val scaledFraction = precipFraction.pow(PrecipExponent)
+        val scaledFraction = (precip.coerceIn(0f, PrecipMaxLimit).pow(PrecipExponent) / precipMaxPower).coerceIn(0f, 1f)
         // Ajout d'une hauteur minimale de 5 pixels pour rendre les barres visibles dès que precip > 0
         val barHeight = (scaledFraction * chartHeight).coerceAtLeast(5f)
         val centerX = chartLeft + (slotWidth * index) + (slotWidth / 2f)
