@@ -86,7 +86,7 @@ internal fun DailyChart(days: List<DayForecast>) {
                     // 1. Temp Bar (Gradient) - Centered
                     val yMaxTemp = chartHeight * (1f - (day.maxC - tempScaleMin) / tempRange)
                     val yMinTemp = chartHeight * (1f - (day.minC - tempScaleMin) / tempRange)
-                    val barWidth = 10.dp.toPx()
+                    val barWidth = 15.dp.toPx()
 
                     val colorMax = getTempColor(day.maxC.toFloat())
                     val colorMin = getTempColor(day.minC.toFloat())
@@ -102,18 +102,30 @@ internal fun DailyChart(days: List<DayForecast>) {
                         cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f)
                     )
 
-                    // 2. Wind Bar (White) - Sightly to the right of temp bar
+                    // 2. Wind Bar (White) - Centered on the same axis as temp bar with shadow
                     val windNormMax = (day.maxWindSpeed.toFloat().coerceIn(0f, windMaxLimit).pow(windExponent) / windMaxPower)
                     val windNormMin = (day.minWindSpeed.toFloat().coerceIn(0f, windMaxLimit).pow(windExponent) / windMaxPower)
                     val yMaxWind = chartHeight * (1f - windNormMax)
                     val yMinWind = chartHeight * (1f - windNormMin)
                     
-                    val windX = xCenter + barWidth / 2f + 4.dp.toPx()
+                    val windX = xCenter
+                    val shadowOffset = 2.dp.toPx()
+                    
+                    // Draw shadow
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.3f),
+                        start = Offset(windX + shadowOffset, yMaxWind + shadowOffset),
+                        end = Offset(windX + shadowOffset, yMinWind + shadowOffset),
+                        strokeWidth = 5.dp.toPx(),
+                        cap = StrokeCap.Round
+                    )
+
+                    // Draw main wind bar
                     drawLine(
                         color = WindBarColor,
                         start = Offset(windX, yMaxWind),
                         end = Offset(windX, yMinWind),
-                        strokeWidth = 3.dp.toPx(),
+                        strokeWidth = 5.dp.toPx(),
                         cap = StrokeCap.Round
                     )
                 }
@@ -130,7 +142,13 @@ internal fun DailyChart(days: List<DayForecast>) {
                         val path = Path().apply {
                             moveTo(precipPoints.first().x, precipPoints.first().y)
                             for (i in 1 until precipPoints.size) {
-                                lineTo(precipPoints[i].x, precipPoints[i].y)
+                                // Only draw line if at least one of the two points is non-zero
+                                // This avoids tracing a flat line at the bottom of the chart
+                                if (precipPcts[i] > 0 || precipPcts[i - 1] > 0) {
+                                    lineTo(precipPoints[i].x, precipPoints[i].y)
+                                } else {
+                                    moveTo(precipPoints[i].x, precipPoints[i].y)
+                                }
                             }
                         }
 
