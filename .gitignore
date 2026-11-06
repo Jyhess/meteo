@@ -11,3 +11,9 @@ captures/
 *.salive
 .venv
 .envrc
+
+# Vim backup, undo and swap files
+*~
+*.un~
+*.swp
+*.swo
