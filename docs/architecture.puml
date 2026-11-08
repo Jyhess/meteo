@@ -1,0 +1,15 @@
+' stack: kotlin
+' Components of meteo: one per package right under the root, one arrow per allowed dependency.
+' Checked by app/src/test/java/com/meteo/app/ArchitectureTest.kt (ArchUnit) and .github/scripts/architecture.py (every package declared).
+' Rewrite them from the code: python3 .github/scripts/architecture.py --write (components), then
+' ARCHITECTURE_DIAGRAM=write ./gradlew :app:testDebugUnitTest (arrows), then review.
+' root: com.meteo.app
+' sources: app/src/main/
+@startuml
+[com.meteo.app.data] <<com.meteo.app.data..>>
+[com.meteo.app.domain] <<com.meteo.app.domain..>>
+[com.meteo.app.ui] <<com.meteo.app.ui..>>
+[com.meteo.app.data] --> [com.meteo.app.domain]
+[com.meteo.app.ui] --> [com.meteo.app.data]
+[com.meteo.app.ui] --> [com.meteo.app.domain]
+@enduml

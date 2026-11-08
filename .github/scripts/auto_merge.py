@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
-"""Merge a low-risk pull request by itself, or label it for review.
+"""Merge a low-risk pull request by itself, or label it "to test", "to acknowledge" or "to review".
 
 Run by .github/workflows/auto-merge.yml on every non-draft pull request opened or
 updated, and again when the pull request's "Verify" workflow completes. It reads the
 pull request's diff and description and:
 
+- when the description fails the check of pr_description.py (same folder), does
+  nothing: the "PR description" check is red, and editing the description runs the
+  decision again; a structural change (structure.py) without an "Architecture changes"
+  section fails it;
 - when the pull request was opened by the repository owner from a branch of the
-  repository itself and every changed file passes, rebase-merges the pull request and
-  deletes its branch;
-- otherwise adds the label "to review" and lists the reasons in the job summary.
+  repository itself, every changed file passes and the description asks nothing of
+  Julien, rebase-merges the pull request and deletes its branch;
+- otherwise adds the labels and lists the reasons in the job summary: "to review"
+  for the files below, an "Architecture changes" section and the structural changes it
+  declares, "to test" and
+  "to acknowledge" from the description (see pr_description.py). A pull request
+  opened by anyone else, or from a fork, gets "to review" whatever its files: on a
+  public repository anyone can open one, and the job holds a write token. The informational
+  label "no ticket" never holds the merge.
 
 When the repository has a .github/workflows/verify.yml, a pull request whose files all
 pass is merged only once the latest Verify run of its head commit has succeeded: while
@@ -19,15 +29,16 @@ A file passes unless:
 
 - it is deleted (or changes type);
 - it is under .github/ or .githooks/, or it is an AGENTS.md or CLAUDE.md;
+- it is agent instructions or configuration: a SKILL.md, a hooks/hooks.json, a
+  .claude/settings*.json, or a file under a .claude-plugin/ folder;
 - it is a test file or a Markdown file and a line was removed or changed, except a
   whole comment line replaced by whole comment lines (`#`, `//`, `///`, lines of
-  `/* */`; `<!-- -->` in Markdown). Added lines are always allowed.
+  `/* */`; `<!-- -->` in Markdown);
+- it is an existing test file and an added line switches a test off (SKIP_MARKER:
+  unittest, pytest, NUnit, xUnit, JUnit, Rust and JavaScript skips, or a bare
+  `return`, which the diff cannot tell from any other). Other added lines are allowed.
 
-The whole pull request goes to review when it was opened by anyone but the repository
-owner or from a fork (on a public repository anyone can open one, and the job holds a
-write token), when its description has a `[manual]` (or
-`[manuel]`) criterion or a "Values to validate" ("Valeurs à valider") section, or
-when it already carries the label.
+A pull request that already carries one of the three labels is never merged.
 
 Test files: a path under a `tests/` folder, or a file named `test_*`, `*_test.*`,
 `*Test.cs`, `*Tests.cs` or `*.spec.*`. More patterns go in .github/auto-merge.json:
@@ -51,16 +62,24 @@ from dataclasses import dataclass, field
 from fnmatch import fnmatchcase
 from pathlib import Path
 
-CONFIG = ".github/auto-merge.json"
+import pr_description
+import structure
+from pr_description import HOLD_LABELS, LABELS, TO_REVIEW
+from structure import CONFIG, git, load_config, matches, test_patterns
+
 VERIFY_WORKFLOW = ".github/workflows/verify.yml"
-REVIEW_LABEL = "to review"
-REVIEW_LABEL_COLOR = "fbca04"
-REVIEW_LABEL_DESCRIPTION = "Needs a human review before merging"
-DEFAULT_TEST_PATTERNS = ["tests/", "test_*", "*_test.*", "*Test.cs", "*Tests.cs", "*.spec.*"]
 ALWAYS_REVIEW_FOLDERS = (".github/", ".githooks/")
 ALWAYS_REVIEW_NAMES = {"AGENTS.md", "CLAUDE.md"}
-MANUAL = re.compile(r"\[(manual|manuel)\]", re.IGNORECASE)
-VALUES_TO_VALIDATE = re.compile(r"(?im)^[ \t]*(?:#{1,6}[ \t]*|\*\*|__)?[ \t]*(values to validate|valeurs [àa] valider)\b")
+AGENT_CONFIG = ("SKILL.md", "*/SKILL.md", "hooks/hooks.json", "*/hooks/hooks.json",
+                ".claude/settings*.json", "*/.claude/settings*.json", ".claude-plugin/*", "*/.claude-plugin/*")
+SKIP_MARKER = re.compile(r"""
+    \bunittest\.skip | \bSkipTest\b | \.skipTest\( | \bpytest\.(mark\.)?skip   # Python
+  | \[\s*Ignore\b | \bSkip\s*=                                              # NUnit, xUnit
+  | @Disabled\b | @Ignore\b                                                 # JUnit
+  | \#\[ignore\b                                                             # Rust
+  | \b(it|test|describe|context)\.skip\b | \bx(it|test|describe|context)\s*\(  # JavaScript
+  | ^\s*return\s*;?\s*$                                                     # a test cut short
+""", re.VERBOSE)
 CODE_COMMENT = ("#", "//", "/*", "*")
 
 
@@ -76,24 +95,6 @@ class FileChange:
     status: str  # A, M, D or T, as given by git diff --name-status --no-renames
     hunks: list[Hunk] = field(default_factory=list)
     binary: bool = False
-
-
-def load_config(path: Path) -> dict:
-    if not path.is_file():
-        return {}
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def test_patterns(config: dict) -> list[str]:
-    return DEFAULT_TEST_PATTERNS + list(config.get("test_patterns", []))
-
-
-def matches(path: str, pattern: str) -> bool:
-    if pattern.endswith("/"):
-        return pattern[:-1] in path.split("/")[:-1]
-    if "/" in pattern:
-        return fnmatchcase(path, pattern)
-    return fnmatchcase(path.rsplit("/", 1)[-1], pattern)
 
 
 def is_test_file(path: str, patterns: list[str]) -> bool:
@@ -136,6 +137,8 @@ def file_reasons(change: FileChange, patterns: list[str]) -> list[str]:
         return [f"{path}: CI, hooks or auto-merge configuration"]
     if name in ALWAYS_REVIEW_NAMES:
         return [f"{path}: agent instructions"]
+    if any(fnmatchcase(path, pattern) for pattern in AGENT_CONFIG):
+        return [f"{path}: agent instructions or configuration"]
     markdown = name.lower().endswith(".md")
     if not markdown and not is_test_file(path, patterns):
         return []
@@ -151,15 +154,21 @@ def file_reasons(change: FileChange, patterns: list[str]) -> list[str]:
         new_comments = sum(is_comment(line, markdown) for line in hunk.added)
         if not old_comments or new_comments < len(hunk.removed):
             return [f"{path}: existing lines of a {kind} removed or changed"]
+    if not markdown:
+        skips = [line.strip() for hunk in change.hunks for line in hunk.added if SKIP_MARKER.search(line)]
+        if skips:
+            return [f"{path}: test skip marker added: {skips[0]}"]
     return []
 
 
-def description_reasons(body: str) -> list[str]:
+def review_reasons(files: list[FileChange], config: dict) -> list[str]:
+    """Why the changed files need a careful review; empty when they can be merged by themselves."""
+    patterns = test_patterns(config)
     reasons = []
-    if MANUAL.search(body):
-        reasons.append("description: [manual] criteria to check by hand")
-    if VALUES_TO_VALIDATE.search(body):
-        reasons.append("description: values to validate")
+    for change in files:
+        reasons += file_reasons(change, patterns)
+    if not files:
+        reasons.append("no changed file")
     return reasons
 
 
@@ -176,31 +185,24 @@ def origin_reasons(pr: dict, repo: str) -> list[str]:
     return reasons
 
 
-def review_reasons(files: list[FileChange], body: str, config: dict) -> list[str]:
-    """Why the pull request needs a review; empty when it can be merged by itself."""
-    patterns = test_patterns(config)
-    reasons = description_reasons(body)
-    for change in files:
-        reasons += file_reasons(change, patterns)
-    if not files:
-        reasons.append("no changed file")
-    return reasons
-
-
-def git(*args: str, cwd: Path | None = None) -> str:
-    return subprocess.run(["git", "-c", "core.quotePath=false", *args], cwd=cwd, check=True,
-                          capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
+def decide(pr: dict, repo: str, files: list[FileChange], description: pr_description.Description,
+           config: dict) -> dict[str, list[str]]:
+    """Labels to add, with their reasons; none of HOLD_LABELS means the pull request can be merged."""
+    labels = {name: list(reasons) for name, reasons in description.labels.items()}
+    reasons = origin_reasons(pr, repo) + review_reasons(files, config)
+    if reasons:
+        labels.setdefault(TO_REVIEW, []).extend(reasons)
+    return labels
 
 
 def changed_files(base: str, head: str, cwd: Path | None = None) -> list[FileChange]:
     """Files changed by head since its merge base with base."""
-    listing = git("diff", "--name-status", "-z", "--no-renames", f"{base}...{head}", cwd=cwd).split("\0")
     files = []
-    for status, path in zip(listing[0::2], listing[1::2]):
+    for status, path in structure.name_status(base, head, cwd):
         diff = git("diff", "--unified=0", "--no-renames", "--no-color", "--no-ext-diff", "--no-textconv",
                    f"{base}...{head}", "--", path, cwd=cwd)
         hunks, binary = parse_hunks(diff)
-        files.append(FileChange(path, status[:1], hunks, binary))
+        files.append(FileChange(path, status, hunks, binary))
     return files
 
 
@@ -253,13 +255,20 @@ def summary(text: str) -> None:
             out.write(text + "\n")
 
 
-def send_to_review(repo: str, number: int, reasons: list[str]) -> None:
-    gh_api("-X", "POST", f"repos/{repo}/labels", "-f", f"name={REVIEW_LABEL}",
-           "-f", f"color={REVIEW_LABEL_COLOR}", "-f", f"description={REVIEW_LABEL_DESCRIPTION}")
-    labelled = gh_api("-X", "POST", f"repos/{repo}/issues/{number}/labels", "-f", f"labels[]={REVIEW_LABEL}")
-    summary(f"## To review\n\n" + "".join(f"- {reason}\n" for reason in reasons))
+def add_labels(repo: str, number: int, labels: dict[str, list[str]]) -> None:
+    """Add the labels (created when missing) and list their reasons in the job summary."""
+    if not labels:
+        return
+    for name in labels:
+        color, description = LABELS[name]
+        gh_api("-X", "POST", f"repos/{repo}/labels", "-f", f"name={name}",
+               "-f", f"color={color}", "-f", f"description={description}")
+    labelled = gh_api("-X", "POST", f"repos/{repo}/issues/{number}/labels",
+                      *[arg for name in labels for arg in ("-f", f"labels[]={name}")])
+    summary("".join(f"## {name.capitalize()}\n\n" + "".join(f"- {reason}\n" for reason in reasons) + "\n"
+                    for name, reasons in labels.items()))
     if not labelled:
-        sys.exit(f"could not add the label {REVIEW_LABEL}")
+        sys.exit(f"could not add the labels {', '.join(labels)}")
 
 
 def main() -> None:
@@ -275,12 +284,19 @@ def main() -> None:
     number = pr["number"]
     base, head = pr["base"]["sha"], pr["head"]["sha"]
     git("fetch", "--no-tags", "--quiet", "origin", f"+refs/pull/{number}/head")
-    reasons = origin_reasons(pr, repo) + review_reasons(changed_files(base, head), pr.get("body") or "",
-                                                        load_config(Path(CONFIG)))
-    if not reasons and REVIEW_LABEL in {label["name"] for label in pr.get("labels", [])}:
-        reasons = [f"the pull request carries the label {REVIEW_LABEL}"]
-    if reasons:
-        send_to_review(repo, number, reasons)
+    config = load_config(Path(CONFIG))
+    description = pr_description.check(pr.get("body") or "", structure.diff_signals(base, head, config))
+    if description.errors:
+        summary("## Not merged\n\nThe description fails the PR description check; editing it runs "
+                "the decision again.\n\n" + "".join(f"- {error}\n" for error in description.errors))
+        return
+    labels = decide(pr, repo, changed_files(base, head), description, config)
+    add_labels(repo, number, labels)
+    if any(name in labels for name in HOLD_LABELS):
+        return
+    held = [name for name in HOLD_LABELS if name in {label["name"] for label in pr.get("labels", [])}]
+    if held:
+        summary(f"## Not merged\n\nThe pull request carries the label {held[0]}.")
         return
     if Path(VERIFY_WORKFLOW).is_file():
         runs = gh_json(f"repos/{repo}/actions/workflows/verify.yml/runs?head_sha={head}&event=pull_request")
@@ -295,7 +311,7 @@ def main() -> None:
             summary("## Not merged\n\nVerify failed on the head commit; a new push runs it again.")
             return
     if not gh_api("-X", "PUT", f"repos/{repo}/pulls/{number}/merge", "-f", "merge_method=rebase", "-f", f"sha={head}"):
-        send_to_review(repo, number, ["rebase merge refused (conflict, or the branch moved)"])
+        add_labels(repo, number, {TO_REVIEW: ["rebase merge refused (conflict, or the branch moved)"]})
         return
     summary("## Merged\n\nEvery changed file passes the low-risk rules.")
     if pr["head"]["repo"] and pr["head"]["repo"]["full_name"] == repo:

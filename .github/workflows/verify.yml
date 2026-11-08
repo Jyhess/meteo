@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: ./gradlew :app:testDebugUnitTest
+      - run: ./gradlew :app:testDebugUnitTest && python3 .github/scripts/architecture.py
