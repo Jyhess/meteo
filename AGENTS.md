@@ -8,8 +8,6 @@ Audience: Android users who want a plain weather forecast; Julien first. Stack: 
 
 - Talk to Julien in French.
 - Documentation and skills are in English; code, comments and commit messages are in English.
-- A question gets an answer, not an action: change files, tickets or remote state only on an explicit request; "Is it possible to…?" is a question: answer, propose, wait.
-- Before designing anything non-trivial, use the shared clarification workflow.
 
 ## Commands
 
@@ -23,15 +21,6 @@ Audience: Android users who want a plain weather forecast; Julien first. Stack: 
 - Documentation lives in `docs/`; no wiki.
 - Tasks are GitHub issues of this repository.
 - Time spent is recorded in the work journal (plugin `dev-journal`).
-
-## Writing
-
-- Write what is needed to act, nothing else: no history (git keeps it), no paraphrase of the code, no copy of a ticket (link it); a decision is its choice and its reason in one line.
-
-## Context
-
-- Every tool result stays in the context: ask only for what is needed (file ranges, `head`, `--stat`, `grep`, a tool's own filters).
-- One ticket per session. When the context-size hook warns, finish the current work, then ask Julien whether to hand over as it says.
 
 ## Vocabulary
 
@@ -48,23 +37,11 @@ Audience: Android users who want a plain weather forecast; Julien first. Stack: 
 - The allowed dependencies form no cycle between components: `.github/scripts/architecture.py` fails on one that its architecture file does not admit as an `allowed cycle`.
 - Changing these components or their checks is an architecture change, approved by Julien beforehand.
 
-## Provisional values
-
-- A value the task does not give (threshold, duration, limit…) gets a provisional one in a named constant or config entry.
-- List them under "Values to validate" in the draft PR, with the label `to acknowledge`, then ask Julien about each: confirm, change, or defer. Confirmed or changed values go into the ticket and the code, and leave the list; a deferred one gets a ticket and stays listed; with none left, drop the label.
-
-## Known limitations
-
-- Anything deliberately left incomplete or simplified is written where it applies (README, doc, comment, or a TODO citing a ticket) and listed at the end of the task and in the PR; their tickets are created with Julien's agreement.
-
 ## Verification
 
 - The pre-push hook (`.githooks/`) runs `./gradlew :app:testDebugUnitTest && python3 .github/scripts/architecture.py`; never bypass it.
 - When it fails, squash each fix into the commit it corrects: `git commit --fixup <sha>`, then `git -c sequence.editor=: rebase -i --autosquash --autostash origin/<default branch>`.
 
-## Git
+## Shared rules
 
-- One commit per feature, fix or change; commit messages in English.
-- Pull requests: once the task's verification passes, push its branch and open the PR as a draft (`gh pr create --draft`) without asking; in the Claude desktop app, turn on the PR's auto-fix (CI, conflicts, review comments), elsewhere say it is off. Only Julien marks a PR ready (it may then be merged by itself): never `gh pr ready`. Any other push only when asked.
-- A task's branch starts from the default branch and stays current with it: `git fetch`, then `git rebase --autostash origin/<default branch>`, when starting or resuming the task and before each push or PR (on the default branch: `git pull --rebase --autostash`). Never branch from another task's branch: work that depends on an unmerged branch or PR starts at once from the default branch, without that code and without asking, and is rebased once it is merged.
-- Resolve and show mechanical conflicts (imports, lists, neighbouring lines); on a conflict of substance, `git rebase --abort` and describe it. A pushed branch goes back with `git push --force-with-lease`.
+- Shared rules: `~/.dev-kit/rules/shared-rules.md`; Claude Code gets them from the core plugin, other agents read the file at session start; a section of this file that contradicts them wins.
