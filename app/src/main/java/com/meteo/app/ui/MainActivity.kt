@@ -1,4 +1,4 @@
-package com.meteo.app
+package com.meteo.app.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -15,12 +15,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.meteo.app.R
 import com.meteo.app.data.WeatherRepository
 import com.meteo.app.data.local.LocationStore
 import com.meteo.app.domain.SavedLocation
-import com.meteo.app.ui.WeatherRoute
-import com.meteo.app.ui.WeatherViewModel
-import com.meteo.app.ui.WeatherViewModelFactory
 import com.meteo.app.ui.theme.MeteoTheme
 
 class MainActivity : ComponentActivity() {
