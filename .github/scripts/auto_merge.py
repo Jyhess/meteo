@@ -5,7 +5,9 @@ Run by .github/workflows/auto-merge.yml on every non-draft pull request opened o
 updated, and again when the pull request's "Verify" workflow completes. It reads the
 pull request's diff and description and:
 
-- when every changed file passes, rebase-merges the pull request and deletes its branch;
+- when the pull request was opened by the repository owner from a branch of the
+  repository itself and every changed file passes, rebase-merges the pull request and
+  deletes its branch;
 - otherwise adds the label "to review" and lists the reasons in the job summary.
 
 When the repository has a .github/workflows/verify.yml, a pull request whose files all
@@ -21,7 +23,9 @@ A file passes unless:
   whole comment line replaced by whole comment lines (`#`, `//`, `///`, lines of
   `/* */`; `<!-- -->` in Markdown). Added lines are always allowed.
 
-The whole pull request goes to review when its description has a `[manual]` (or
+The whole pull request goes to review when it was opened by anyone but the repository
+owner or from a fork (on a public repository anyone can open one, and the job holds a
+write token), when its description has a `[manual]` (or
 `[manuel]`) criterion or a "Values to validate" ("Valeurs à valider") section, or
 when it already carries the label.
 
@@ -159,6 +163,19 @@ def description_reasons(body: str) -> list[str]:
     return reasons
 
 
+def origin_reasons(pr: dict, repo: str) -> list[str]:
+    """Why the pull request's origin needs a review: an author other than the owner, or a fork."""
+    owner = repo.split("/", 1)[0]
+    author = (pr.get("user") or {}).get("login") or "unknown"
+    head_repo = (pr["head"].get("repo") or {}).get("full_name")
+    reasons = []
+    if author.lower() != owner.lower():
+        reasons.append(f"opened by {author}, not by the repository owner {owner}")
+    if head_repo is None or head_repo.lower() != repo.lower():
+        reasons.append(f"head branch in {head_repo or 'a deleted repository'}, not in {repo}")
+    return reasons
+
+
 def review_reasons(files: list[FileChange], body: str, config: dict) -> list[str]:
     """Why the pull request needs a review; empty when it can be merged by itself."""
     patterns = test_patterns(config)
@@ -258,7 +275,8 @@ def main() -> None:
     number = pr["number"]
     base, head = pr["base"]["sha"], pr["head"]["sha"]
     git("fetch", "--no-tags", "--quiet", "origin", f"+refs/pull/{number}/head")
-    reasons = review_reasons(changed_files(base, head), pr.get("body") or "", load_config(Path(CONFIG)))
+    reasons = origin_reasons(pr, repo) + review_reasons(changed_files(base, head), pr.get("body") or "",
+                                                        load_config(Path(CONFIG)))
     if not reasons and REVIEW_LABEL in {label["name"] for label in pr.get("labels", [])}:
         reasons = [f"the pull request carries the label {REVIEW_LABEL}"]
     if reasons:
